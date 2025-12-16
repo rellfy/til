@@ -1,3 +1,6 @@
+mod cli;
+
 fn main() {
-    todo!()
+    let input = std::env::args().collect::<String>();
+    cli::process(&input);
 }

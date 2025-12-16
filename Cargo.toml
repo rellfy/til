@@ -7,3 +7,5 @@ edition = "2024"
 jiff = "0.2.16"
 sha2 = "0.11.0-rc.3"
 uuid = { version = "1.19.0", features = ["v7"] }
+thiserror = "2.0"
+derive-getters = "0.5"
