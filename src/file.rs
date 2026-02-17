@@ -1,12 +1,12 @@
-//! Code for composing and parsing the binary for a .til file.
-
 use crate::error::TimelineResult;
 use crate::timeline::Timeline;
 
 impl Timeline {
-    pub fn as_bytes(&self) -> Vec<u8> {}
+    pub fn as_bytes(&self) -> TimelineResult<Vec<u8>> {
+        Ok(postcard::to_allocvec(self)?)
+    }
 
     pub fn from_bytes(bytes: &[u8]) -> TimelineResult<Self> {
-        todo!()
+        Ok(postcard::from_bytes(bytes)?)
     }
 }

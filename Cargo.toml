@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-jiff = "0.2.16"
-sha2 = "0.11.0-rc.3"
-uuid = { version = "1.19.0", features = ["v7"] }
-thiserror = "2.0"
+clap = { version = "4", features = ["derive"] }
 derive-getters = "0.5"
+jiff = { version = "0.2.16", features = ["serde"] }
+postcard = { version = "1", features = ["alloc"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2.0"
+uuid = { version = "1.19.0", features = ["v7", "serde"] }

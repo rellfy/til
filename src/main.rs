@@ -1,6 +1,8 @@
+use clap::Parser;
+use cli::Cli;
+
 mod cli;
 
 fn main() {
-    let input = std::env::args().collect::<String>();
-    cli::process(&input);
+    Cli::parse().run();
 }
