@@ -137,7 +137,12 @@ fn print_show(timeline: &Timeline) {
     if !events.is_empty() {
         println!("Events:");
         for e in &events {
-            println!("  {}  {}{}", format_datetime(e.datetime()), e.label(), format_tags(timeline, e.tags()));
+            println!(
+                "  {}  {}{}",
+                format_datetime(e.datetime()),
+                e.label(),
+                format_tags(timeline, e.tags())
+            );
         }
         println!();
     }
@@ -146,11 +151,20 @@ fn print_show(timeline: &Timeline) {
         println!("Ranges:");
         for r in &ranges {
             let span = match r.value() {
-                EventRange::StartEnd(s, e) => format!("{} — {}", format_datetime(s.datetime()), format_datetime(e.datetime())),
+                EventRange::StartEnd(s, e) => format!(
+                    "{} — {}",
+                    format_datetime(s.datetime()),
+                    format_datetime(e.datetime())
+                ),
                 EventRange::Start(s) => format!("{} — ...", format_datetime(s.datetime())),
                 EventRange::End(e) => format!("... — {}", format_datetime(e.datetime())),
             };
-            println!("  {}  {}{}", span, r.label(), format_tags(timeline, r.tags()));
+            println!(
+                "  {}  {}{}",
+                span,
+                r.label(),
+                format_tags(timeline, r.tags())
+            );
         }
         println!();
     }
@@ -166,14 +180,23 @@ fn print_events(timeline: &Timeline) {
     let mut events: Vec<_> = timeline.events().values().collect();
     events.sort_by_key(|e| e.datetime());
     for e in &events {
-        println!("{}  {}{}", format_datetime(e.datetime()), e.label(), format_tags(timeline, e.tags()));
+        println!(
+            "{}  {}{}",
+            format_datetime(e.datetime()),
+            e.label(),
+            format_tags(timeline, e.tags())
+        );
     }
 }
 
 fn print_ranges(timeline: &Timeline) {
     for r in timeline.ranges().values() {
         let span = match r.value() {
-            EventRange::StartEnd(s, e) => format!("{} — {}", format_datetime(s.datetime()), format_datetime(e.datetime())),
+            EventRange::StartEnd(s, e) => format!(
+                "{} — {}",
+                format_datetime(s.datetime()),
+                format_datetime(e.datetime())
+            ),
             EventRange::Start(s) => format!("{} — ...", format_datetime(s.datetime())),
             EventRange::End(e) => format!("... — {}", format_datetime(e.datetime())),
         };
