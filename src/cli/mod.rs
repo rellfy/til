@@ -1,5 +1,7 @@
+mod parse_datetime;
+
 use clap::{Parser, Subcommand};
-use jiff::civil::DateTime;
+use parse_datetime::{format_datetime, parse_datetime};
 use std::path::PathBuf;
 use til::error::{TimelineError, TimelineResult};
 use til::timeline::Timeline;
@@ -106,20 +108,6 @@ fn load_or_create(path: &PathBuf) -> TimelineResult<Timeline> {
     } else {
         let label = path.file_stem().unwrap().to_str().unwrap();
         Ok(Timeline::new(label))
-    }
-}
-
-fn parse_datetime(s: &str) -> TimelineResult<DateTime> {
-    s.parse::<DateTime>()
-        .or_else(|_| s.parse::<jiff::civil::Date>().map(|d| d.at(0, 0, 0, 0)))
-        .map_err(|_| TimelineError::DateTimeParse(s.to_string()))
-}
-
-fn format_datetime(dt: &DateTime) -> String {
-    if dt.hour() == 0 && dt.minute() == 0 && dt.second() == 0 {
-        dt.date().to_string()
-    } else {
-        dt.to_string()
     }
 }
 
