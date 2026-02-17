@@ -1,10 +1,11 @@
 use crate::error::{TimelineError, TimelineResult};
 use crate::unit::{Event, Range, Tag};
+use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Getters, Serialize, Deserialize)]
 pub struct Timeline {
     id: Uuid,
     events: HashMap<Uuid, Event>,
@@ -28,20 +29,62 @@ impl Timeline {
         self.events.insert(*event.id(), event);
     }
 
-    pub fn remove_event(&mut self, label: &str) {
-        self.events.retain(|_, e| e.label() != label);
+    pub fn remove_event(&mut self, label: &str) -> TimelineResult<()> {
+        let id = self
+            .events
+            .values()
+            .find(|e| e.label() == label)
+            .map(|e| *e.id())
+            .ok_or_else(|| TimelineError::EventNotFound(label.to_string()))?;
+        self.events.remove(&id);
+        Ok(())
     }
 
     pub fn tag_event(&mut self, tag_label: &str, event_label: &str) -> TimelineResult<()> {
-        let tag = Tag::new(tag_label);
-        let tag_id = *tag.id();
-        self.tags.insert(tag_id, tag);
+        let tag_id = self.find_or_create_tag(tag_label);
         let event = self
             .events
             .values_mut()
             .find(|e| e.label() == event_label)
-            .ok_or(TimelineError::EventNotFound)?;
+            .ok_or_else(|| TimelineError::EventNotFound(event_label.to_string()))?;
         event.add_tag(tag_id);
+        Ok(())
+    }
+
+    pub fn untag_event(&mut self, tag_label: &str, event_label: &str) -> TimelineResult<()> {
+        let tag_id = self
+            .tags
+            .values()
+            .find(|t| t.label() == tag_label)
+            .map(|t| *t.id())
+            .ok_or_else(|| TimelineError::TagNotFound(tag_label.to_string()))?;
+        let event = self
+            .events
+            .values_mut()
+            .find(|e| e.label() == event_label)
+            .ok_or_else(|| TimelineError::EventNotFound(event_label.to_string()))?;
+        event.remove_tag(&tag_id);
+        Ok(())
+    }
+
+    pub fn add_tag(&mut self, tag: Tag) {
+        self.tags.insert(*tag.id(), tag);
+    }
+
+    pub fn delete_tag(&mut self, label: &str) -> TimelineResult<()> {
+        let tag_id = self
+            .tags
+            .values()
+            .find(|t| t.label() == label)
+            .map(|t| *t.id())
+            .ok_or_else(|| TimelineError::TagNotFound(label.to_string()))?;
+        self.tags.remove(&tag_id);
+        for event in self.events.values_mut() {
+            event.remove_tag(&tag_id);
+        }
+        for range in self.ranges.values_mut() {
+            range.remove_tag(&tag_id);
+        }
         Ok(())
     }
 
@@ -53,7 +96,23 @@ impl Timeline {
         self.ranges.retain(|_, r| r.label() != label);
     }
 
-    fn remove_unused_tags(&mut self) {
-        todo!()
+    pub fn merge(&mut self, other: Timeline) {
+        self.tags.extend(other.tags);
+        self.events.extend(other.events);
+        self.ranges.extend(other.ranges);
+    }
+
+    pub fn tag_label(&self, tag_id: &Uuid) -> Option<&str> {
+        self.tags.get(tag_id).map(|t| t.label().as_str())
+    }
+
+    fn find_or_create_tag(&mut self, label: &str) -> Uuid {
+        if let Some(tag) = self.tags.values().find(|t| t.label() == label) {
+            return *tag.id();
+        }
+        let tag = Tag::new(label);
+        let id = *tag.id();
+        self.tags.insert(id, tag);
+        id
     }
 }

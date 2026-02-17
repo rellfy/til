@@ -74,4 +74,12 @@ impl Range {
             label: label.to_string(),
         }
     }
+
+    pub fn add_tag(&mut self, tag_id: Uuid) {
+        self.tags.insert(tag_id);
+    }
+
+    pub fn remove_tag(&mut self, tag_id: &Uuid) {
+        self.tags.remove(tag_id);
+    }
 }

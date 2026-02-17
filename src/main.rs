@@ -4,5 +4,8 @@ use cli::Cli;
 mod cli;
 
 fn main() {
-    Cli::parse().run();
+    if let Err(e) = Cli::parse().run() {
+        eprintln!("error: {e}");
+        std::process::exit(1);
+    }
 }
