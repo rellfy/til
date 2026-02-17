@@ -3,44 +3,35 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(name = "til", about = "Create and manage timelines")]
 pub struct Cli {
+    /// Path to the .til file.
+    file: String,
     #[command(subcommand)]
-    command: Command,
+    command: Option<Command>,
 }
 
 #[derive(Subcommand)]
 enum Command {
-    /// Create a new timeline file.
-    New { file: String },
+    /// Show event, tag and range counts.
+    Inspect,
+    /// Render the timeline.
+    Show,
     /// Manage events.
     Event {
-        /// Path to the .til file.
-        file: String,
         #[command(subcommand)]
         command: EventCommand,
     },
     /// Manage ranges.
     Range {
-        /// Path to the .til file.
-        file: String,
         #[command(subcommand)]
         command: RangeCommand,
     },
     /// Manage tags.
     Tag {
-        /// Path to the .til file.
-        file: String,
         #[command(subcommand)]
         command: TagCommand,
     },
-    /// Show the timeline.
-    Show {
-        /// Path to the .til file.
-        file: String,
-    },
-    /// Merge multiple timeline files into one.
+    /// Merge other timeline files into this one.
     Merge {
-        /// Path to the output .til file.
-        output: String,
         /// Paths to the .til files to merge.
         files: Vec<String>,
     },
@@ -89,26 +80,27 @@ enum TagCommand {
 impl Cli {
     pub fn run(self) {
         match self.command {
-            Command::New { file } => todo!(),
-            Command::Event { file, command } => match command {
+            None => todo!(),
+            Some(Command::Inspect) => todo!(),
+            Some(Command::Show) => todo!(),
+            Some(Command::Event { command }) => match command {
                 EventCommand::Add { label, datetime } => todo!(),
                 EventCommand::Remove { label } => todo!(),
                 EventCommand::Tag { event_label, tag } => todo!(),
                 EventCommand::Untag { event_label, tag } => todo!(),
                 EventCommand::List => todo!(),
             },
-            Command::Range { file, command } => match command {
+            Some(Command::Range { command }) => match command {
                 RangeCommand::Add { label, start, end } => todo!(),
                 RangeCommand::Remove { label } => todo!(),
                 RangeCommand::List => todo!(),
             },
-            Command::Tag { file, command } => match command {
+            Some(Command::Tag { command }) => match command {
                 TagCommand::Add { label } => todo!(),
                 TagCommand::Delete { label } => todo!(),
                 TagCommand::List => todo!(),
             },
-            Command::Show { file } => todo!(),
-            Command::Merge { output, files } => todo!(),
+            Some(Command::Merge { files }) => todo!(),
         }
     }
 }
