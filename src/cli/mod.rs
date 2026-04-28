@@ -237,7 +237,7 @@ impl Cli {
                 match command {
                     EventCommand::Add { label, datetime } => {
                         let dt = parse_datetime(&datetime)?;
-                        let event = Event::new(&label, dt, None);
+                        let event = Event::new(&label, dt);
                         timeline.add_event(event);
                         save(&path, &timeline)?;
                     }
@@ -267,17 +267,17 @@ impl Cli {
                                 let s_dt = parse_datetime(&s)?;
                                 let e_dt = parse_datetime(&e)?;
                                 EventRange::StartEnd(
-                                    Event::new(&label, s_dt, None),
-                                    Event::new(&label, e_dt, None),
+                                    Event::new(&label, s_dt),
+                                    Event::new(&label, e_dt),
                                 )
                             }
                             (Some(s), None) => {
                                 let s_dt = parse_datetime(&s)?;
-                                EventRange::Start(Event::new(&label, s_dt, None))
+                                EventRange::Start(Event::new(&label, s_dt))
                             }
                             (None, Some(e)) => {
                                 let e_dt = parse_datetime(&e)?;
-                                EventRange::End(Event::new(&label, e_dt, None))
+                                EventRange::End(Event::new(&label, e_dt))
                             }
                             (None, None) => return Err(TimelineError::RangeMissingBound),
                         };

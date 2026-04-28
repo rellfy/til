@@ -1,6 +1,5 @@
 use derive_getters::Getters;
 use jiff::civil::DateTime;
-use jiff::tz::TimeZone;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use uuid::Uuid;
@@ -9,8 +8,6 @@ use uuid::Uuid;
 pub struct Event {
     id: Uuid,
     datetime: DateTime,
-    #[serde(skip)]
-    time_zone: Option<TimeZone>,
     tags: HashSet<Uuid>,
     label: String,
 }
@@ -46,11 +43,10 @@ impl Tag {
 }
 
 impl Event {
-    pub fn new(label: &str, datetime: DateTime, time_zone: Option<TimeZone>) -> Self {
+    pub fn new(label: &str, datetime: DateTime) -> Self {
         Self {
             id: Uuid::now_v7(),
             datetime,
-            time_zone,
             tags: HashSet::new(),
             label: label.to_string(),
         }
