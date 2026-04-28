@@ -28,9 +28,9 @@ pub struct Range {
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum EventRange {
-    StartEnd(Event, Event),
-    Start(Event),
-    End(Event),
+    StartEnd(DateTime, DateTime),
+    Start(DateTime),
+    End(DateTime),
 }
 
 impl Tag {

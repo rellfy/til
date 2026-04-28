@@ -123,9 +123,19 @@ fn load_or_create(path: &PathBuf) -> TimelineResult<Timeline> {
 
 fn range_sort_key(value: &EventRange) -> jiff::civil::DateTime {
     match value {
-        EventRange::StartEnd(s, _) => *s.datetime(),
-        EventRange::Start(s) => *s.datetime(),
-        EventRange::End(e) => *e.datetime(),
+        EventRange::StartEnd(s, _) => *s,
+        EventRange::Start(s) => *s,
+        EventRange::End(e) => *e,
+    }
+}
+
+fn format_range_span(value: &EventRange) -> String {
+    match value {
+        EventRange::StartEnd(s, e) => {
+            format!("{} - {}", format_datetime(s), format_datetime(e))
+        }
+        EventRange::Start(s) => format!("{} - ...", format_datetime(s)),
+        EventRange::End(e) => format!("... - {}", format_datetime(e)),
     }
 }
 
@@ -169,15 +179,7 @@ fn print_show(timeline: &Timeline) {
     if !ranges.is_empty() {
         println!("Ranges:");
         for r in &ranges {
-            let span = match r.value() {
-                EventRange::StartEnd(s, e) => format!(
-                    "{} — {}",
-                    format_datetime(s.datetime()),
-                    format_datetime(e.datetime())
-                ),
-                EventRange::Start(s) => format!("{} — ...", format_datetime(s.datetime())),
-                EventRange::End(e) => format!("... — {}", format_datetime(e.datetime())),
-            };
+            let span = format_range_span(r.value());
             println!(
                 "  {}  {}{}",
                 span,
@@ -212,15 +214,7 @@ fn print_ranges(timeline: &Timeline) {
     let mut ranges: Vec<_> = timeline.ranges().values().collect();
     ranges.sort_by_key(|r| range_sort_key(r.value()));
     for r in ranges {
-        let span = match r.value() {
-            EventRange::StartEnd(s, e) => format!(
-                "{} — {}",
-                format_datetime(s.datetime()),
-                format_datetime(e.datetime())
-            ),
-            EventRange::Start(s) => format!("{} — ...", format_datetime(s.datetime())),
-            EventRange::End(e) => format!("... — {}", format_datetime(e.datetime())),
-        };
+        let span = format_range_span(r.value());
         println!("{}  {}{}", span, r.label(), format_tags(timeline, r.tags()));
     }
 }
@@ -285,21 +279,10 @@ impl Cli {
                     RangeCommand::Add { label, start, end } => {
                         let value = match (start, end) {
                             (Some(s), Some(e)) => {
-                                let s_dt = parse_datetime(&s)?;
-                                let e_dt = parse_datetime(&e)?;
-                                EventRange::StartEnd(
-                                    Event::new(&label, s_dt),
-                                    Event::new(&label, e_dt),
-                                )
+                                EventRange::StartEnd(parse_datetime(&s)?, parse_datetime(&e)?)
                             }
-                            (Some(s), None) => {
-                                let s_dt = parse_datetime(&s)?;
-                                EventRange::Start(Event::new(&label, s_dt))
-                            }
-                            (None, Some(e)) => {
-                                let e_dt = parse_datetime(&e)?;
-                                EventRange::End(Event::new(&label, e_dt))
-                            }
+                            (Some(s), None) => EventRange::Start(parse_datetime(&s)?),
+                            (None, Some(e)) => EventRange::End(parse_datetime(&e)?),
                             (None, None) => return Err(TimelineError::RangeMissingBound),
                         };
                         let range = Range::new(&label, value);
