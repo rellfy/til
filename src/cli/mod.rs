@@ -115,6 +115,14 @@ fn load_or_create(path: &PathBuf) -> TimelineResult<Timeline> {
     }
 }
 
+fn range_sort_key(value: &EventRange) -> jiff::civil::DateTime {
+    match value {
+        EventRange::StartEnd(s, _) => *s.datetime(),
+        EventRange::Start(s) => *s.datetime(),
+        EventRange::End(e) => *e.datetime(),
+    }
+}
+
 fn format_tags(timeline: &Timeline, tag_ids: &std::collections::HashSet<uuid::Uuid>) -> String {
     if tag_ids.is_empty() {
         return String::new();
@@ -150,7 +158,8 @@ fn print_show(timeline: &Timeline) {
         }
         println!();
     }
-    let ranges: Vec<_> = timeline.ranges().values().collect();
+    let mut ranges: Vec<_> = timeline.ranges().values().collect();
+    ranges.sort_by_key(|r| range_sort_key(r.value()));
     if !ranges.is_empty() {
         println!("Ranges:");
         for r in &ranges {
@@ -194,7 +203,9 @@ fn print_events(timeline: &Timeline) {
 }
 
 fn print_ranges(timeline: &Timeline) {
-    for r in timeline.ranges().values() {
+    let mut ranges: Vec<_> = timeline.ranges().values().collect();
+    ranges.sort_by_key(|r| range_sort_key(r.value()));
+    for r in ranges {
         let span = match r.value() {
             EventRange::StartEnd(s, e) => format!(
                 "{} — {}",
