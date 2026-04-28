@@ -136,8 +136,8 @@ function Spiral({ timeline }: Props) {
     const svg = svgRef.current;
     if (!svg) return;
 
-    let target = 1;
-    let current = 1;
+    let target = 0;
+    let current = 0;
     let rafId = 0;
 
     const updateView = () => {
