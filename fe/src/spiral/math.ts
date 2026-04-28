@@ -7,8 +7,8 @@ export type SpiralConfig = {
 };
 
 export const DEFAULT_CONFIG: SpiralConfig = {
-  turns: 12,
-  rStart: 30,
+  turns: 2,
+  rStart: 120,
   rEnd: 1600,
 };
 

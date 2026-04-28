@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { Timeline } from "../lib/timeline";
-import {
-  arcPath,
-  parseDateTime,
-  pointAtTheta,
-  radiusAtTheta,
-  spiralPath,
-  thetaFromUnit,
-} from "./math";
+import { arcPath, parseDateTime, pointAtTheta, spiralPath, thetaFromUnit } from "./math";
 import { rangeColor } from "./colors";
 import "./Spiral.css";
 
@@ -37,9 +30,29 @@ type Layout = {
   tMax: number;
 };
 
+// Visible window size around the focal point, in spiral user units.
+// Must stay below the radial gap between adjacent turns
+// (= (rEnd - rStart) / turns) to never reveal another arm.
+const FOCAL_VIEW_WIDTH = 600;
+
 const RANGE_OFFSET = 40;
-const ZOOM_FACTOR = 1.0;
-const SCROLL_SENSITIVITY = 0.0008;
+const SCROLL_SENSITIVITY = 0.00015;
+const SCROLL_EASE = 0.18;
+const SCROLL_EPSILON = 0.0002;
+
+const WHEEL_LINE_PX = 16;
+const WHEEL_PAGE_PX = 800;
+
+function normalizeWheelDelta(event: WheelEvent): number {
+  let dy = event.deltaY;
+  if (event.deltaMode === 1) dy *= WHEEL_LINE_PX;
+  else if (event.deltaMode === 2) dy *= WHEEL_PAGE_PX;
+  return dy;
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
 
 function computeLayout(timeline: Timeline): Layout {
   const events = Object.values(timeline.events);
@@ -107,10 +120,6 @@ function computeLayout(timeline: Timeline): Layout {
   return { events: eventNodes, ranges: rangeArcs, spiralD: spiralPath(), tMin, tMax };
 }
 
-function clamp(v: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, v));
-}
-
 function formatYear(ms: number): string {
   return new Date(ms).getUTCFullYear().toString();
 }
@@ -126,27 +135,41 @@ function Spiral({ timeline }: Props) {
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
-    const sRef = { current: 1 };
+
+    let target = 1;
+    let current = 1;
+    let rafId = 0;
 
     const updateView = () => {
-      const s = sRef.current;
-      const theta = thetaFromUnit(s);
+      const theta = thetaFromUnit(current);
       const focal = pointAtTheta(theta);
-      const r = radiusAtTheta(theta);
       const rect = svg.getBoundingClientRect();
-      const pxWidth = rect.width || 800;
-      const pxHeight = rect.height || 600;
-      const zoom = pxWidth / (2 * r * ZOOM_FACTOR);
-      const vw = pxWidth / zoom;
-      const vh = pxHeight / zoom;
-      svg.setAttribute("viewBox", `${focal.x - vw / 2} ${focal.y - vh / 2} ${vw} ${vh}`);
-      svg.style.setProperty("--screen-scale", String(1 / zoom));
+      const aspect = rect.width === 0 ? 1.5 : rect.width / rect.height;
+      const w = FOCAL_VIEW_WIDTH;
+      const h = w / aspect;
+      svg.setAttribute("viewBox", `${focal.x - w / 2} ${focal.y - h / 2} ${w} ${h}`);
+      const screenScale = (rect.width || 1) / w;
+      svg.style.setProperty("--screen-scale", String(1 / screenScale));
+    };
+
+    const animate = () => {
+      const diff = target - current;
+      if (Math.abs(diff) < SCROLL_EPSILON) {
+        current = target;
+        updateView();
+        rafId = 0;
+        return;
+      }
+      current += diff * SCROLL_EASE;
+      updateView();
+      rafId = requestAnimationFrame(animate);
     };
 
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      sRef.current = clamp(sRef.current + event.deltaY * SCROLL_SENSITIVITY, 0, 1);
-      updateView();
+      const dy = normalizeWheelDelta(event);
+      target = clamp(target + dy * SCROLL_SENSITIVITY, 0, 1);
+      if (!rafId) rafId = requestAnimationFrame(animate);
     };
 
     const onResize = () => updateView();
@@ -158,6 +181,7 @@ function Spiral({ timeline }: Props) {
     return () => {
       svg.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", onResize);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [layout]);
 
@@ -176,7 +200,7 @@ function Spiral({ timeline }: Props) {
         ))}
         {layout.events.map((e) => {
           const out = Math.cos(e.theta) >= 0;
-          const offset = 12;
+          const offset = 14;
           const tx = e.x + Math.cos(e.theta) * offset;
           const ty = e.y + Math.sin(e.theta) * offset;
           const anchor = out ? "start" : "end";
