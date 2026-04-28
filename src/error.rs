@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum TimelineError {
     #[error("event not found: {0}")]
     EventNotFound(String),
+    #[error("range not found: {0}")]
+    RangeNotFound(String),
     #[error("tag not found: {0}")]
     TagNotFound(String),
     #[error("event already exists: {0}")]

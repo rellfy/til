@@ -70,6 +70,10 @@ enum RangeCommand {
     },
     /// Remove a range.
     Remove { label: String },
+    /// Tag a range.
+    Tag { range_label: String, tag: String },
+    /// Remove a tag from a range.
+    Untag { range_label: String, tag: String },
     /// List all ranges.
     List,
 }
@@ -287,6 +291,14 @@ impl Cli {
                     }
                     RangeCommand::Remove { label } => {
                         timeline.remove_range(&label);
+                        save(&path, &timeline)?;
+                    }
+                    RangeCommand::Tag { range_label, tag } => {
+                        timeline.tag_range(&tag, &range_label)?;
+                        save(&path, &timeline)?;
+                    }
+                    RangeCommand::Untag { range_label, tag } => {
+                        timeline.untag_range(&tag, &range_label)?;
                         save(&path, &timeline)?;
                     }
                     RangeCommand::List => {

@@ -96,6 +96,33 @@ impl Timeline {
         Ok(())
     }
 
+    pub fn tag_range(&mut self, tag_label: &str, range_label: &str) -> TimelineResult<()> {
+        let tag_id = self.find_or_create_tag(tag_label);
+        let range = self
+            .ranges
+            .values_mut()
+            .find(|r| r.label() == range_label)
+            .ok_or_else(|| TimelineError::RangeNotFound(range_label.to_string()))?;
+        range.add_tag(tag_id);
+        Ok(())
+    }
+
+    pub fn untag_range(&mut self, tag_label: &str, range_label: &str) -> TimelineResult<()> {
+        let tag_id = self
+            .tags
+            .values()
+            .find(|t| t.label() == tag_label)
+            .map(|t| *t.id())
+            .ok_or_else(|| TimelineError::TagNotFound(tag_label.to_string()))?;
+        let range = self
+            .ranges
+            .values_mut()
+            .find(|r| r.label() == range_label)
+            .ok_or_else(|| TimelineError::RangeNotFound(range_label.to_string()))?;
+        range.remove_tag(&tag_id);
+        Ok(())
+    }
+
     pub fn add_range(&mut self, range: Range) -> TimelineResult<()> {
         if self.ranges.values().any(|r| r.label() == range.label()) {
             return Err(TimelineError::RangeLabelExists(range.label().clone()));
