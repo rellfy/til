@@ -1,0 +1,18 @@
+[package]
+name = "til-wasm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[dependencies]
+til = { path = "../.." }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+uuid = { version = "1.19.0", features = ["v7", "serde", "js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }

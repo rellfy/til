@@ -3,6 +3,9 @@ name = "til"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ["crates/til-wasm"]
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 derive-getters = "0.5"

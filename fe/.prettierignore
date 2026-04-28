@@ -2,3 +2,5 @@ dist
 node_modules
 *.tsbuildinfo
 package-lock.json
+pnpm-lock.yaml
+src/wasm
