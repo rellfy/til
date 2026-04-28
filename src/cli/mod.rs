@@ -96,6 +96,13 @@ fn resolve_path(file: &str) -> PathBuf {
     }
 }
 
+fn stem_label(path: &PathBuf) -> TimelineResult<&str> {
+    path.file_stem()
+        .and_then(|s| s.to_str())
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| TimelineError::InvalidPath(path.display().to_string()))
+}
+
 fn load(path: &PathBuf) -> TimelineResult<Timeline> {
     let bytes = std::fs::read(path)?;
     Timeline::from_bytes(&bytes)
@@ -110,8 +117,7 @@ fn load_or_create(path: &PathBuf) -> TimelineResult<Timeline> {
     if path.exists() {
         load(path)
     } else {
-        let label = path.file_stem().unwrap().to_str().unwrap();
-        Ok(Timeline::new(label))
+        Ok(Timeline::new(stem_label(path)?))
     }
 }
 
@@ -234,7 +240,7 @@ impl Cli {
                     let timeline = load(&path)?;
                     print_inspect(&path, &timeline);
                 } else {
-                    let timeline = Timeline::new(path.file_stem().unwrap().to_str().unwrap());
+                    let timeline = Timeline::new(stem_label(&path)?);
                     save(&path, &timeline)?;
                     println!("Created {}", path.display());
                 }

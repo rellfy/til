@@ -22,6 +22,8 @@ pub enum TimelineError {
     DateTimeParse(String),
     #[error("a range needs at least a --start or --end")]
     RangeMissingBound,
+    #[error("invalid file path: {0}")]
+    InvalidPath(String),
     #[error("not a .til file (bad magic)")]
     InvalidMagic,
     #[error("unsupported .til format version: {0}")]
