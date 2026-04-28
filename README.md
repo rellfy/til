@@ -16,44 +16,56 @@ til can be used for all sorts of things:
 
 ## Local Usage
 
-til can be used as a command line utility.
+til is a command line utility. Every invocation takes the path to a `.til` file
+as its first argument; the `.til` extension may be omitted.
 
-To create a new timeline:
-
-```
-til init half-life-3
-```
-
-This creates the file `half-life-3.til` and opens it.
-
-To add an event to the newly created timeline:
+To create a new timeline, run til with no subcommand:
 
 ```
-til "first person to think about half-life 3" 2004/11/16
+til half-life-3
 ```
 
-This will add the labelled event with a date but without a time zone.
-Because no time was provided, this event will default to midnight.
+If `half-life-3.til` does not exist, it is created. If it already exists, til
+prints a summary (event/range/tag counts).
 
-It is also possible to create ranges.
-Ranges can link two events, but they can also only specify the end event
-or the start event.
-For example:
+To add an event:
 
 ```
-til "half-life 3 time to release" start:"first person to think about half-life 3" 
+til half-life-3 event add "first person to think about half-life 3" 2004-11-16
 ```
 
-This creates a range with a start date but no end date.
+Dates are accepted in several forms:
 
-It is also possible to render the timeline on the terminal:
+- ISO datetime: `2004-11-16T09:30:00`
+- ISO date: `2004-11-16` (defaults to midnight)
+- Year/month: `2004-11`
+- Compact: `20041116`
+- Named month: `November 16 2004`, `Nov 2004`
+- Bare year: `2004`
+
+To add a range, supply `--start` and/or `--end` datetimes:
 
 ```
-til render
+til half-life-3 range add "half-life 3 time to release" --start 2004-11-16
 ```
 
-Although something like a web app would be a much better way to interact
-with and visualise timelines, this provides a quick way to look at them.
+A range needs at least one of `--start` or `--end`.
+
+To render the timeline:
+
+```
+til half-life-3 show
+```
+
+This prints events (sorted by datetime), ranges, and tags.
+
+Other commands:
+
+- `til <file> inspect`: counts of events, ranges and tags.
+- `til <file> event {remove,tag,untag,list}`: manage events.
+- `til <file> range {remove,tag,untag,list}`: manage ranges.
+- `til <file> tag {add,delete,list}`: manage tags.
+- `til <file> merge <other.til> [...]`: merge other timelines into this one.
 
 ## .til file
 
