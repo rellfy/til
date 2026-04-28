@@ -16,7 +16,7 @@
 .spiral-track {
   fill: none;
   stroke: var(--border);
-  stroke-width: 1;
+  stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
@@ -25,12 +25,12 @@
   fill: var(--text);
   stroke: var(--bg);
   vector-effect: non-scaling-stroke;
-  r: calc(4px * var(--screen-scale));
-  stroke-width: calc(1.5px * var(--screen-scale));
+  r: calc(7px * var(--screen-scale));
+  stroke-width: calc(2.5px * var(--screen-scale));
 }
 
 .spiral-event text {
-  font-size: calc(11px * var(--screen-scale));
+  font-size: calc(16px * var(--screen-scale));
   fill: var(--text);
   pointer-events: none;
   user-select: none;
@@ -41,14 +41,14 @@
 }
 
 .spiral-tags {
-  font-size: calc(9px * var(--screen-scale));
+  font-size: calc(13px * var(--screen-scale));
   opacity: 0.6;
 }
 
 .spiral-range path {
-  stroke-width: 6px;
+  stroke-width: 14px;
   vector-effect: non-scaling-stroke;
-  opacity: 0.7;
+  opacity: 0.65;
   transition: opacity 120ms ease;
 }
 

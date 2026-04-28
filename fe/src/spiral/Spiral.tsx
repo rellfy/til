@@ -33,7 +33,7 @@ type Layout = {
 // Visible window size around the focal point, in spiral user units.
 // Must stay below the radial gap between adjacent turns
 // (= (rEnd - rStart) / turns) to never reveal another arm.
-const FOCAL_VIEW_WIDTH = 600;
+const FOCAL_VIEW_WIDTH = 380;
 
 const RANGE_OFFSET = 40;
 const SCROLL_SENSITIVITY = 0.00015;
