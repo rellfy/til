@@ -14,6 +14,10 @@ pub enum TimelineError {
     DateTimeParse(String),
     #[error("a range needs at least a --start or --end")]
     RangeMissingBound,
+    #[error("not a .til file (bad magic)")]
+    InvalidMagic,
+    #[error("unsupported .til format version: {0}")]
+    UnsupportedVersion(u8),
 }
 
 pub type TimelineResult<T> = Result<T, TimelineError>;
