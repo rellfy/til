@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { select } from "d3-selection";
-import { zoom, zoomIdentity, type ZoomBehavior } from "d3-zoom";
 import type { Timeline } from "../lib/timeline";
 import {
-  DEFAULT_CONFIG,
   arcPath,
   parseDateTime,
   pointAtTheta,
+  radiusAtTheta,
   spiralPath,
   thetaFromUnit,
 } from "./math";
@@ -35,14 +33,13 @@ type Layout = {
   events: EventNode[];
   ranges: RangeArc[];
   spiralD: string;
-  bounds: { minX: number; minY: number; size: number };
   tMin: number;
   tMax: number;
 };
 
-const SVG_PADDING = 200;
 const RANGE_OFFSET = 40;
-const DOT_RADIUS = 5;
+const ZOOM_FACTOR = 1.0;
+const SCROLL_SENSITIVITY = 0.0008;
 
 function computeLayout(timeline: Timeline): Layout {
   const events = Object.values(timeline.events);
@@ -107,11 +104,11 @@ function computeLayout(timeline: Timeline): Layout {
     };
   });
 
-  const spiralD = spiralPath();
-  const reach = DEFAULT_CONFIG.rEnd + SVG_PADDING + RANGE_OFFSET + 100;
-  const bounds = { minX: -reach, minY: -reach, size: reach * 2 };
+  return { events: eventNodes, ranges: rangeArcs, spiralD: spiralPath(), tMin, tMax };
+}
 
-  return { events: eventNodes, ranges: rangeArcs, spiralD, bounds, tMin, tMax };
+function clamp(v: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, v));
 }
 
 function formatYear(ms: number): string {
@@ -124,80 +121,86 @@ type Props = {
 
 function Spiral({ timeline }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const viewportRef = useRef<SVGGElement>(null);
   const layout = useMemo(() => computeLayout(timeline), [timeline]);
 
   useEffect(() => {
-    const svgEl = svgRef.current;
-    const gEl = viewportRef.current;
-    if (!svgEl || !gEl) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const sRef = { current: 1 };
 
-    const svg = select(svgEl);
-    const g = select(gEl);
-    const behavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.05, 80])
-      .on("zoom", (event) => {
-        g.attr("transform", event.transform.toString());
-      });
+    const updateView = () => {
+      const s = sRef.current;
+      const theta = thetaFromUnit(s);
+      const focal = pointAtTheta(theta);
+      const r = radiusAtTheta(theta);
+      const rect = svg.getBoundingClientRect();
+      const pxWidth = rect.width || 800;
+      const pxHeight = rect.height || 600;
+      const zoom = pxWidth / (2 * r * ZOOM_FACTOR);
+      const vw = pxWidth / zoom;
+      const vh = pxHeight / zoom;
+      svg.setAttribute("viewBox", `${focal.x - vw / 2} ${focal.y - vh / 2} ${vw} ${vh}`);
+      svg.style.setProperty("--screen-scale", String(1 / zoom));
+    };
 
-    svg.call(behavior);
-    svg.call(behavior.transform, zoomIdentity);
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      sRef.current = clamp(sRef.current + event.deltaY * SCROLL_SENSITIVITY, 0, 1);
+      updateView();
+    };
+
+    const onResize = () => updateView();
+
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("resize", onResize);
+    updateView();
 
     return () => {
-      svg.on(".zoom", null);
+      svg.removeEventListener("wheel", onWheel);
+      window.removeEventListener("resize", onResize);
     };
   }, [layout]);
 
-  const { bounds } = layout;
-  const viewBox = `${bounds.minX} ${bounds.minY} ${bounds.size} ${bounds.size}`;
-
   return (
     <div className="spiral-host">
-      <svg
-        ref={svgRef}
-        className="spiral-svg"
-        viewBox={viewBox}
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <g ref={viewportRef}>
-          <path className="spiral-track" d={layout.spiralD} />
-          {layout.ranges.map((r) => (
-            <g key={r.id} className="spiral-range">
-              <path d={r.d} stroke={r.color} fill="none" strokeWidth={6} strokeLinecap="round" />
+      <svg ref={svgRef} className="spiral-svg" preserveAspectRatio="xMidYMid meet">
+        <path className="spiral-track" d={layout.spiralD} />
+        {layout.ranges.map((r) => (
+          <g key={r.id} className="spiral-range">
+            <path d={r.d} stroke={r.color} fill="none" strokeLinecap="round" />
+            <title>
+              {r.label}
+              {r.tagLabels.length ? ` [${r.tagLabels.join(", ")}]` : ""}
+            </title>
+          </g>
+        ))}
+        {layout.events.map((e) => {
+          const out = Math.cos(e.theta) >= 0;
+          const offset = 12;
+          const tx = e.x + Math.cos(e.theta) * offset;
+          const ty = e.y + Math.sin(e.theta) * offset;
+          const anchor = out ? "start" : "end";
+          const tagSuffix = e.tagLabels.length ? ` [${e.tagLabels.join(", ")}]` : "";
+          return (
+            <g key={e.id} className="spiral-event">
+              <circle cx={e.x} cy={e.y} />
+              <text x={tx} y={ty} textAnchor={anchor} dominantBaseline="middle">
+                {e.label}
+                <tspan className="spiral-tags">{tagSuffix}</tspan>
+              </text>
               <title>
-                {r.label}
-                {r.tagLabels.length ? ` [${r.tagLabels.join(", ")}]` : ""}
+                {e.label} ({e.datetime}){tagSuffix}
               </title>
             </g>
-          ))}
-          {layout.events.map((e) => {
-            const out = Math.cos(e.theta) >= 0;
-            const offset = 12;
-            const tx = e.x + Math.cos(e.theta) * offset;
-            const ty = e.y + Math.sin(e.theta) * offset;
-            const anchor = out ? "start" : "end";
-            const tagSuffix = e.tagLabels.length ? ` [${e.tagLabels.join(", ")}]` : "";
-            return (
-              <g key={e.id} className="spiral-event">
-                <circle cx={e.x} cy={e.y} r={DOT_RADIUS} />
-                <text x={tx} y={ty} textAnchor={anchor} dominantBaseline="middle">
-                  {e.label}
-                  <tspan className="spiral-tags">{tagSuffix}</tspan>
-                </text>
-                <title>
-                  {e.label} ({e.datetime}){tagSuffix}
-                </title>
-              </g>
-            );
-          })}
-        </g>
+          );
+        })}
       </svg>
       <div className="spiral-legend">
         <strong>{timeline.label}</strong>
         <span>
           {formatYear(layout.tMin)} - {formatYear(layout.tMax)}
         </span>
-        <span>scroll to zoom, drag to pan</span>
+        <span>scroll to travel through time</span>
       </div>
     </div>
   );

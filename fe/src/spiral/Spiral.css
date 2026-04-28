@@ -7,31 +7,30 @@
 }
 
 .spiral-svg {
+  --screen-scale: 1;
   width: 100%;
   height: 100%;
   display: block;
-  cursor: grab;
-}
-
-.spiral-svg:active {
-  cursor: grabbing;
 }
 
 .spiral-track {
   fill: none;
   stroke: var(--border);
   stroke-width: 1;
+  vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
 .spiral-event circle {
   fill: var(--text);
   stroke: var(--bg);
-  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  r: calc(4px * var(--screen-scale));
+  stroke-width: calc(1.5px * var(--screen-scale));
 }
 
 .spiral-event text {
-  font-size: 11px;
+  font-size: calc(11px * var(--screen-scale));
   fill: var(--text);
   pointer-events: none;
   user-select: none;
@@ -42,11 +41,13 @@
 }
 
 .spiral-tags {
-  font-size: 9px;
+  font-size: calc(9px * var(--screen-scale));
   opacity: 0.6;
 }
 
 .spiral-range path {
+  stroke-width: 6px;
+  vector-effect: non-scaling-stroke;
   opacity: 0.7;
   transition: opacity 120ms ease;
 }
