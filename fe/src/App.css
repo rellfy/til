@@ -1,19 +1,32 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
 .app {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .nav {
   display: flex;
   gap: 1rem;
-  padding-bottom: 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border, #ddd);
-  margin-bottom: 2rem;
+  background: var(--bg);
+  z-index: 1;
 }
 
 .nav a {
   font-weight: 600;
   text-decoration: none;
   color: inherit;
+}
+
+.app main {
+  flex: 1;
+  min-height: 0;
 }
