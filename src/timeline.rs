@@ -25,8 +25,12 @@ impl Timeline {
         }
     }
 
-    pub fn add_event(&mut self, event: Event) {
+    pub fn add_event(&mut self, event: Event) -> TimelineResult<()> {
+        if self.events.values().any(|e| e.label() == event.label()) {
+            return Err(TimelineError::EventLabelExists(event.label().clone()));
+        }
         self.events.insert(*event.id(), event);
+        Ok(())
     }
 
     pub fn remove_event(&mut self, label: &str) -> TimelineResult<()> {
@@ -67,8 +71,12 @@ impl Timeline {
         Ok(())
     }
 
-    pub fn add_tag(&mut self, tag: Tag) {
+    pub fn add_tag(&mut self, tag: Tag) -> TimelineResult<()> {
+        if self.tags.values().any(|t| t.label() == tag.label()) {
+            return Err(TimelineError::TagLabelExists(tag.label().clone()));
+        }
         self.tags.insert(*tag.id(), tag);
+        Ok(())
     }
 
     pub fn delete_tag(&mut self, label: &str) -> TimelineResult<()> {
@@ -88,18 +96,38 @@ impl Timeline {
         Ok(())
     }
 
-    pub fn add_range(&mut self, range: Range) {
+    pub fn add_range(&mut self, range: Range) -> TimelineResult<()> {
+        if self.ranges.values().any(|r| r.label() == range.label()) {
+            return Err(TimelineError::RangeLabelExists(range.label().clone()));
+        }
         self.ranges.insert(*range.id(), range);
+        Ok(())
     }
 
     pub fn remove_range(&mut self, label: &str) {
         self.ranges.retain(|_, r| r.label() != label);
     }
 
-    pub fn merge(&mut self, other: Timeline) {
+    pub fn merge(&mut self, other: Timeline) -> TimelineResult<()> {
+        for tag in other.tags.values() {
+            if self.tags.values().any(|t| t.label() == tag.label()) {
+                return Err(TimelineError::TagLabelExists(tag.label().clone()));
+            }
+        }
+        for event in other.events.values() {
+            if self.events.values().any(|e| e.label() == event.label()) {
+                return Err(TimelineError::EventLabelExists(event.label().clone()));
+            }
+        }
+        for range in other.ranges.values() {
+            if self.ranges.values().any(|r| r.label() == range.label()) {
+                return Err(TimelineError::RangeLabelExists(range.label().clone()));
+            }
+        }
         self.tags.extend(other.tags);
         self.events.extend(other.events);
         self.ranges.extend(other.ranges);
+        Ok(())
     }
 
     pub fn tag_label(&self, tag_id: &Uuid) -> Option<&str> {

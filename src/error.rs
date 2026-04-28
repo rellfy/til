@@ -6,6 +6,12 @@ pub enum TimelineError {
     EventNotFound(String),
     #[error("tag not found: {0}")]
     TagNotFound(String),
+    #[error("event already exists: {0}")]
+    EventLabelExists(String),
+    #[error("range already exists: {0}")]
+    RangeLabelExists(String),
+    #[error("tag already exists: {0}")]
+    TagLabelExists(String),
     #[error("serialization error: {0}")]
     Postcard(#[from] postcard::Error),
     #[error("io error: {0}")]

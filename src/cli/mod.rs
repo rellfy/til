@@ -238,7 +238,7 @@ impl Cli {
                     EventCommand::Add { label, datetime } => {
                         let dt = parse_datetime(&datetime)?;
                         let event = Event::new(&label, dt);
-                        timeline.add_event(event);
+                        timeline.add_event(event)?;
                         save(&path, &timeline)?;
                     }
                     EventCommand::Remove { label } => {
@@ -282,7 +282,7 @@ impl Cli {
                             (None, None) => return Err(TimelineError::RangeMissingBound),
                         };
                         let range = Range::new(&label, value);
-                        timeline.add_range(range);
+                        timeline.add_range(range)?;
                         save(&path, &timeline)?;
                     }
                     RangeCommand::Remove { label } => {
@@ -299,7 +299,7 @@ impl Cli {
                 match command {
                     TagCommand::Add { label } => {
                         let tag = Tag::new(&label);
-                        timeline.add_tag(tag);
+                        timeline.add_tag(tag)?;
                         save(&path, &timeline)?;
                     }
                     TagCommand::Delete { label } => {
@@ -316,7 +316,7 @@ impl Cli {
                 for f in &files {
                     let other_path = resolve_path(f);
                     let other = load(&other_path)?;
-                    timeline.merge(other);
+                    timeline.merge(other)?;
                 }
                 save(&path, &timeline)?;
                 println!("Merged {} file(s) into {}", files.len(), path.display());
