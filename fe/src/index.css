@@ -1,0 +1,32 @@
+:root {
+  --text: #1f2937;
+  --bg: #ffffff;
+  --border: #e5e7eb;
+
+  font:
+    16px/1.5 system-ui,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e5e7eb;
+    --bg: #0f1115;
+    --border: #2e303a;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}

@@ -1,0 +1,19 @@
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border, #ddd);
+  margin-bottom: 2rem;
+}
+
+.nav a {
+  font-weight: 600;
+  text-decoration: none;
+  color: inherit;
+}
