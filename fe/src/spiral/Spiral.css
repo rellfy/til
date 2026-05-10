@@ -67,6 +67,17 @@
   opacity: 1;
 }
 
+.spiral-range-label {
+  font-size: calc(15px * var(--screen-scale));
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: calc(3px * var(--screen-scale));
+  stroke-linejoin: round;
+}
+
 .spiral-legend {
   position: absolute;
   top: 1rem;

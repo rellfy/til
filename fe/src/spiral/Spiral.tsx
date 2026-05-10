@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { Timeline } from "../lib/timeline";
-import { arcPath, parseDateTime, pointAtTheta, spiralPath, thetaFromUnit } from "./math";
+import {
+  arcPath,
+  parseDateTime,
+  pointAtTheta,
+  pointAtThetaOffset,
+  spiralPath,
+  thetaFromUnit,
+} from "./math";
 import { rangeColor } from "./colors";
 import "./Spiral.css";
 
@@ -24,6 +31,9 @@ type RangeArc = {
   label: string;
   color: string;
   segments: RangeSegment[];
+  startTheta: number;
+  endTheta: number;
+  layer: number;
   tagLabels: string[];
 };
 
@@ -42,6 +52,8 @@ const FOCAL_VIEW_WIDTH = 380;
 
 const RANGE_STROKE_BASE = 6;
 const RANGE_STROKE_STRIDE = 8;
+const RANGE_LABEL_INWARD_BASE_PX = 48;
+const RANGE_LABEL_LAYER_HEIGHT_PX = 20;
 const SCROLL_SENSITIVITY = 0.00015;
 const SCROLL_EASE = 0.18;
 const SCROLL_EPSILON = 0.0002;
@@ -116,6 +128,23 @@ function computeLayout(timeline: Timeline): Layout {
     }
     return a <= b ? { start: a, end: b } : { start: b, end: a };
   });
+  const order = ranges
+    .map((_, idx) => idx)
+    .sort((a, b) => rangeBounds[a].start - rangeBounds[b].start);
+  const laneEnds: number[] = [];
+  const layerOf = new Array<number>(ranges.length);
+  for (const idx of order) {
+    let assigned = -1;
+    for (let k = 0; k < laneEnds.length; k++) {
+      if (laneEnds[k] <= rangeBounds[idx].start) {
+        assigned = k;
+        break;
+      }
+    }
+    if (assigned === -1) assigned = laneEnds.length;
+    laneEnds[assigned] = rangeBounds[idx].end;
+    layerOf[idx] = assigned;
+  }
   const rangeArcs: RangeArc[] = ranges.map((r, i) => {
     const { start, end } = rangeBounds[i];
     const cuts = new Set<number>([start, end]);
@@ -148,6 +177,9 @@ function computeLayout(timeline: Timeline): Layout {
       label: r.label,
       color: rangeColor(i),
       segments,
+      startTheta: start,
+      endTheta: end,
+      layer: layerOf[i],
       tagLabels: tagLabels(r.tags),
     };
   });
@@ -175,6 +207,12 @@ function Spiral({ timeline }: Props) {
     let current = 0;
     let rafId = 0;
 
+    const labelMeta = new Map(
+      layout.ranges.map((r) => [
+        r.id,
+        { startTheta: r.startTheta, endTheta: r.endTheta, layer: r.layer },
+      ]),
+    );
     const updateView = () => {
       const theta = thetaFromUnit(current);
       const focal = pointAtTheta(theta);
@@ -185,6 +223,23 @@ function Spiral({ timeline }: Props) {
       svg.setAttribute("viewBox", `${focal.x - w / 2} ${focal.y - h / 2} ${w} ${h}`);
       const screenScale = (rect.width || 1) / w;
       svg.style.setProperty("--screen-scale", String(1 / screenScale));
+      const labels = svg.querySelectorAll<SVGTextElement>(".spiral-range-label");
+      labels.forEach((el) => {
+        const meta = labelMeta.get(el.dataset.rangeId ?? "");
+        if (!meta) return;
+        const t = clamp(theta, meta.startTheta, meta.endTheta);
+        const inwardPx = RANGE_LABEL_INWARD_BASE_PX + meta.layer * RANGE_LABEL_LAYER_HEIGHT_PX;
+        const inwardUnits = inwardPx / screenScale;
+        const p = pointAtThetaOffset(t, -inwardUnits);
+        el.setAttribute("x", p.x.toFixed(2));
+        el.setAttribute("y", p.y.toFixed(2));
+        const tangentDeg = (((t * 180) / Math.PI + 90) % 360 + 360) % 360;
+        const flipped = tangentDeg > 90 && tangentDeg < 270 ? tangentDeg + 180 : tangentDeg;
+        el.setAttribute(
+          "transform",
+          `rotate(${flipped.toFixed(2)} ${p.x.toFixed(2)} ${p.y.toFixed(2)})`,
+        );
+      });
     };
 
     const animate = () => {
@@ -236,6 +291,15 @@ function Spiral({ timeline }: Props) {
                 strokeLinecap="round"
               />
             ))}
+            <text
+              className="spiral-range-label"
+              data-range-id={r.id}
+              fill={r.color}
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {r.label}
+            </text>
             <title>
               {r.label}
               {r.tagLabels.length ? ` [${r.tagLabels.join(", ")}]` : ""}
