@@ -14,11 +14,16 @@ type EventNode = {
   tagLabels: string[];
 };
 
+type RangeSegment = {
+  d: string;
+  strokeWidth: number;
+};
+
 type RangeArc = {
   id: string;
   label: string;
-  d: string;
   color: string;
+  segments: RangeSegment[];
   tagLabels: string[];
 };
 
@@ -35,7 +40,8 @@ type Layout = {
 // (= (rEnd - rStart) / turns) to never reveal another arm.
 const FOCAL_VIEW_WIDTH = 380;
 
-const RANGE_OFFSET = 40;
+const RANGE_STROKE_BASE = 6;
+const RANGE_STROKE_STRIDE = 8;
 const SCROLL_SENSITIVITY = 0.00015;
 const SCROLL_EASE = 0.18;
 const SCROLL_EPSILON = 0.0002;
@@ -94,25 +100,54 @@ function computeLayout(timeline: Timeline): Layout {
   });
   eventNodes.sort((a, b) => a.theta - b.theta);
 
-  const rangeArcs: RangeArc[] = ranges.map((r, i) => {
+  const rangeBounds = ranges.map((r) => {
     const v = r.value;
-    let thetaA: number;
-    let thetaB: number;
+    let a: number;
+    let b: number;
     if ("StartEnd" in v) {
-      thetaA = thetaFromUnit(unit(parseDateTime(v.StartEnd[0])));
-      thetaB = thetaFromUnit(unit(parseDateTime(v.StartEnd[1])));
+      a = thetaFromUnit(unit(parseDateTime(v.StartEnd[0])));
+      b = thetaFromUnit(unit(parseDateTime(v.StartEnd[1])));
     } else if ("Start" in v) {
-      thetaA = thetaFromUnit(unit(parseDateTime(v.Start)));
-      thetaB = thetaFromUnit(1);
+      a = thetaFromUnit(unit(parseDateTime(v.Start)));
+      b = thetaFromUnit(1);
     } else {
-      thetaA = thetaFromUnit(0);
-      thetaB = thetaFromUnit(unit(parseDateTime(v.End)));
+      a = thetaFromUnit(0);
+      b = thetaFromUnit(unit(parseDateTime(v.End)));
+    }
+    return a <= b ? { start: a, end: b } : { start: b, end: a };
+  });
+  const rangeArcs: RangeArc[] = ranges.map((r, i) => {
+    const { start, end } = rangeBounds[i];
+    const cuts = new Set<number>([start, end]);
+    for (let j = 0; j < ranges.length; j++) {
+      if (j === i) continue;
+      const { start: s, end: e } = rangeBounds[j];
+      if (s > start && s < end) cuts.add(s);
+      if (e > start && e < end) cuts.add(e);
+    }
+    const sorted = [...cuts].sort((a, b) => a - b);
+    const segments: RangeSegment[] = [];
+    for (let k = 0; k < sorted.length - 1; k++) {
+      const a = sorted[k];
+      const b = sorted[k + 1];
+      const mid = (a + b) / 2;
+      let count = 0;
+      let rank = 0;
+      for (let j = 0; j < ranges.length; j++) {
+        const rb = rangeBounds[j];
+        if (rb.start <= mid && rb.end >= mid) {
+          if (j < i) rank++;
+          count++;
+        }
+      }
+      const strokeWidth = RANGE_STROKE_BASE + (count - 1 - rank) * RANGE_STROKE_STRIDE;
+      segments.push({ d: arcPath(a, b), strokeWidth });
     }
     return {
       id: r.id,
       label: r.label,
-      d: arcPath(thetaA, thetaB, RANGE_OFFSET + (i % 4) * 14),
       color: rangeColor(i),
+      segments,
       tagLabels: tagLabels(r.tags),
     };
   });
@@ -191,7 +226,16 @@ function Spiral({ timeline }: Props) {
         <path className="spiral-track" d={layout.spiralD} />
         {layout.ranges.map((r) => (
           <g key={r.id} className="spiral-range">
-            <path d={r.d} stroke={r.color} fill="none" strokeLinecap="round" />
+            {r.segments.map((s, k) => (
+              <path
+                key={k}
+                d={s.d}
+                stroke={r.color}
+                strokeWidth={s.strokeWidth}
+                fill="none"
+                strokeLinecap="round"
+              />
+            ))}
             <title>
               {r.label}
               {r.tagLabels.length ? ` [${r.tagLabels.join(", ")}]` : ""}

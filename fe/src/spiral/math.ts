@@ -32,15 +32,6 @@ export function pointAtTheta(theta: number, cfg: SpiralConfig = DEFAULT_CONFIG):
   return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
 }
 
-export function pointAtThetaOffset(
-  theta: number,
-  radialOffset: number,
-  cfg: SpiralConfig = DEFAULT_CONFIG,
-): Point {
-  const r = radiusAtTheta(theta, cfg) + radialOffset;
-  return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
-}
-
 export function spiralPath(cfg: SpiralConfig = DEFAULT_CONFIG, stepsPerTurn = 80): string {
   const totalSteps = cfg.turns * stepsPerTurn;
   return polylinePath(totalSteps, (i) => pointAtTheta(thetaFromUnit(i / totalSteps, cfg), cfg));
@@ -49,7 +40,6 @@ export function spiralPath(cfg: SpiralConfig = DEFAULT_CONFIG, stepsPerTurn = 80
 export function arcPath(
   thetaA: number,
   thetaB: number,
-  radialOffset: number,
   cfg: SpiralConfig = DEFAULT_CONFIG,
   stepsPerTurn = 80,
 ): string {
@@ -58,7 +48,7 @@ export function arcPath(
   const steps = Math.max(8, Math.ceil(turns * stepsPerTurn));
   return polylinePath(steps, (i) => {
     const theta = thetaA + (i / steps) * (thetaB - thetaA);
-    return pointAtThetaOffset(theta, radialOffset, cfg);
+    return pointAtTheta(theta, cfg);
   });
 }
 

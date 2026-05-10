@@ -58,7 +58,6 @@
 }
 
 .spiral-range path {
-  stroke-width: 14px;
   vector-effect: non-scaling-stroke;
   opacity: 0.65;
   transition: opacity 120ms ease;
