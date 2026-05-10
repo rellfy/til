@@ -95,20 +95,35 @@
 
 .spiral-legend {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
+  top: 1.5rem;
+  left: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  background: rgba(0, 0, 0, 0.04);
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 12px;
   pointer-events: none;
+  user-select: none;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  color: var(--text);
 }
 
-@media (prefers-color-scheme: dark) {
-  .spiral-legend {
-    background: rgba(255, 255, 255, 0.06);
-  }
+.spiral-legend-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.spiral-legend-range {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.spiral-legend-hint {
+  margin-top: 0.5rem;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  opacity: 0.35;
 }

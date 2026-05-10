@@ -388,11 +388,11 @@ function Spiral({ timeline }: Props) {
         })}
       </svg>
       <div className="spiral-legend">
-        <strong>{timeline.label}</strong>
-        <span>
-          {formatYear(layout.tMin)} - {formatYear(layout.tMax)}
-        </span>
-        <span>scroll to travel through time</span>
+        <div className="spiral-legend-title">{timeline.label}</div>
+        <div className="spiral-legend-range">
+          {formatYear(layout.tMin)} – {formatYear(layout.tMax)}
+        </div>
+        <div className="spiral-legend-hint">scroll to travel through time</div>
       </div>
     </div>
   );
