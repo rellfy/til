@@ -5,6 +5,7 @@ import {
   parseDateTime,
   pointAtTheta,
   pointAtThetaOffset,
+  radiusAtTheta,
   spiralPath,
   thetaFromUnit,
 } from "./math";
@@ -43,6 +44,7 @@ type Layout = {
   spiralD: string;
   tMin: number;
   tMax: number;
+  maxLabelChars: number;
 };
 
 // Visible window size around the focal point, in spiral user units.
@@ -52,8 +54,25 @@ const FOCAL_VIEW_WIDTH = 380;
 
 const RANGE_STROKE_BASE = 6;
 const RANGE_STROKE_STRIDE = 8;
-const RANGE_LABEL_INWARD_BASE_PX = 48;
-const RANGE_LABEL_LAYER_HEIGHT_PX = 20;
+const LABEL_INWARD_BASE_PX = 10;
+const LABEL_INWARD_PER_CHAR_PX = 4;
+const LABEL_LAYER_HEIGHT_PX = 20;
+const RANGE_LABEL_BOUNDARY_PADDING_PX = 35;
+
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function formatDate(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function tangentRotationDeg(t: number): number {
+  const deg = ((((t * 180) / Math.PI + 90) % 360) + 360) % 360;
+  return deg > 90 && deg < 270 ? deg + 180 : deg;
+}
 const SCROLL_SENSITIVITY = 0.00015;
 const SCROLL_EASE = 0.18;
 const SCROLL_EPSILON = 0.0002;
@@ -128,23 +147,33 @@ function computeLayout(timeline: Timeline): Layout {
     }
     return a <= b ? { start: a, end: b } : { start: b, end: a };
   });
-  const order = ranges
-    .map((_, idx) => idx)
-    .sort((a, b) => rangeBounds[a].start - rangeBounds[b].start);
-  const laneEnds: number[] = [];
-  const layerOf = new Array<number>(ranges.length);
-  for (const idx of order) {
-    let assigned = -1;
-    for (let k = 0; k < laneEnds.length; k++) {
-      if (laneEnds[k] <= rangeBounds[idx].start) {
-        assigned = k;
-        break;
-      }
-    }
-    if (assigned === -1) assigned = laneEnds.length;
-    laneEnds[assigned] = rangeBounds[idx].end;
-    layerOf[idx] = assigned;
+  type LaneEvent = { theta: number; kind: 0 | 1; idx: number };
+  const laneEvents: LaneEvent[] = [];
+  for (let i = 0; i < ranges.length; i++) {
+    laneEvents.push({ theta: rangeBounds[i].start, kind: 1, idx: i });
+    laneEvents.push({ theta: rangeBounds[i].end, kind: 0, idx: i });
   }
+  laneEvents.sort((a, b) => a.theta - b.theta || a.kind - b.kind);
+  const layerOf = new Array<number>(ranges.length);
+  const freeLanes: number[] = [];
+  let nextNewLane = 0;
+  for (const ev of laneEvents) {
+    if (ev.kind === 0) {
+      const lane = layerOf[ev.idx];
+      let insertAt = freeLanes.length;
+      for (let i = 0; i < freeLanes.length; i++) {
+        if (freeLanes[i] > lane) {
+          insertAt = i;
+          break;
+        }
+      }
+      freeLanes.splice(insertAt, 0, lane);
+    } else {
+      layerOf[ev.idx] = freeLanes.length > 0 ? freeLanes.shift()! : nextNewLane++;
+    }
+  }
+  let maxLabelChars = "31 Dec 9999".length;
+  for (const r of ranges) maxLabelChars = Math.max(maxLabelChars, r.label.length);
   const rangeArcs: RangeArc[] = ranges.map((r, i) => {
     const { start, end } = rangeBounds[i];
     const cuts = new Set<number>([start, end]);
@@ -184,7 +213,14 @@ function computeLayout(timeline: Timeline): Layout {
     };
   });
 
-  return { events: eventNodes, ranges: rangeArcs, spiralD: spiralPath(), tMin, tMax };
+  return {
+    events: eventNodes,
+    ranges: rangeArcs,
+    spiralD: spiralPath(),
+    tMin,
+    tMax,
+    maxLabelChars,
+  };
 }
 
 function formatYear(ms: number): string {
@@ -227,19 +263,42 @@ function Spiral({ timeline }: Props) {
       labels.forEach((el) => {
         const meta = labelMeta.get(el.dataset.rangeId ?? "");
         if (!meta) return;
-        const t = clamp(theta, meta.startTheta, meta.endTheta);
-        const inwardPx = RANGE_LABEL_INWARD_BASE_PX + meta.layer * RANGE_LABEL_LAYER_HEIGHT_PX;
+        const inwardPx =
+          LABEL_INWARD_BASE_PX +
+          layout.maxLabelChars * LABEL_INWARD_PER_CHAR_PX +
+          (meta.layer + 1) * LABEL_LAYER_HEIGHT_PX;
         const inwardUnits = inwardPx / screenScale;
+        const halfWidthUnits = el.getBBox().width / 2;
+        const paddingUnits = RANGE_LABEL_BOUNDARY_PADDING_PX / screenScale;
+        const midTheta = (meta.startTheta + meta.endTheta) / 2;
+        const rInward = Math.max(radiusAtTheta(midTheta) - inwardUnits, 1);
+        const halfDtheta = (halfWidthUnits + paddingUnits) / rInward;
+        const effStart = meta.startTheta + halfDtheta;
+        const effEnd = meta.endTheta - halfDtheta;
+        const t = effStart >= effEnd ? midTheta : clamp(theta, effStart, effEnd);
         const p = pointAtThetaOffset(t, -inwardUnits);
         el.setAttribute("x", p.x.toFixed(2));
         el.setAttribute("y", p.y.toFixed(2));
-        const tangentDeg = (((t * 180) / Math.PI + 90) % 360 + 360) % 360;
-        const flipped = tangentDeg > 90 && tangentDeg < 270 ? tangentDeg + 180 : tangentDeg;
         el.setAttribute(
           "transform",
-          `rotate(${flipped.toFixed(2)} ${p.x.toFixed(2)} ${p.y.toFixed(2)})`,
+          `rotate(${tangentRotationDeg(t).toFixed(2)} ${p.x.toFixed(2)} ${p.y.toFixed(2)})`,
         );
       });
+      const dateEl = svg.querySelector<SVGTextElement>(".spiral-date-label");
+      if (dateEl) {
+        const dateStr = formatDate(layout.tMin + current * (layout.tMax - layout.tMin));
+        dateEl.textContent = dateStr;
+        const inwardPx =
+          LABEL_INWARD_BASE_PX + layout.maxLabelChars * LABEL_INWARD_PER_CHAR_PX;
+        const inwardUnits = inwardPx / screenScale;
+        const p = pointAtThetaOffset(theta, -inwardUnits);
+        dateEl.setAttribute("x", p.x.toFixed(2));
+        dateEl.setAttribute("y", p.y.toFixed(2));
+        dateEl.setAttribute(
+          "transform",
+          `rotate(${tangentRotationDeg(theta).toFixed(2)} ${p.x.toFixed(2)} ${p.y.toFixed(2)})`,
+        );
+      }
     };
 
     const animate = () => {
@@ -279,6 +338,7 @@ function Spiral({ timeline }: Props) {
     <div className="spiral-host">
       <svg ref={svgRef} className="spiral-svg" preserveAspectRatio="xMidYMid meet">
         <path className="spiral-track" d={layout.spiralD} />
+        <text className="spiral-date-label" textAnchor="middle" dominantBaseline="middle" />
         {layout.ranges.map((r) => (
           <g key={r.id} className="spiral-range">
             {r.segments.map((s, k) => (

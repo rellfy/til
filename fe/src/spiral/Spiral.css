@@ -11,6 +11,9 @@
   width: 100%;
   height: 100%;
   display: block;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
   -webkit-mask-image: radial-gradient(
     circle at center,
     black 25%,
@@ -70,6 +73,18 @@
 .spiral-range-label {
   font-size: calc(15px * var(--screen-scale));
   font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: calc(3px * var(--screen-scale));
+  stroke-linejoin: round;
+}
+
+.spiral-date-label {
+  font-size: calc(14px * var(--screen-scale));
+  font-weight: 500;
+  fill: #fff;
   pointer-events: none;
   user-select: none;
   paint-order: stroke;
