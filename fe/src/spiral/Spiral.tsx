@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
-import type { Timeline } from "../lib/timeline";
+import {useEffect, useMemo, useRef} from "react";
+import type {Timeline} from "../lib/timeline";
 import {
   arcPath,
   parseDateTime,
@@ -9,7 +9,7 @@ import {
   spiralPath,
   thetaFromUnit,
 } from "./math";
-import { rangeColor } from "./colors";
+import {rangeColor} from "./colors";
 import "./Spiral.css";
 
 type EventNode = {
@@ -20,6 +20,9 @@ type EventNode = {
   theta: number;
   x: number;
   y: number;
+  labelX: number;
+  labelY: number;
+  labelOut: boolean;
   tagLabels: string[];
 };
 
@@ -60,6 +63,12 @@ const LABEL_INWARD_PER_CHAR_PX = 4;
 const LABEL_LAYER_HEIGHT_PX = 20;
 const RANGE_LABEL_BOUNDARY_PADDING_PX = 35;
 
+const EVENT_LABEL_CHAR_WIDTH_USER = 3.7;
+const EVENT_LABEL_HEIGHT_USER = 7;
+const EVENT_LABEL_GAP_USER = 3;
+const EVENT_LABEL_SHIFT_STEP_USER = 10;
+const EVENT_LABEL_MAX_STEPS = 40;
+
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -74,6 +83,7 @@ function tangentRotationDeg(t: number): number {
   const deg = ((((t * 180) / Math.PI + 90) % 360) + 360) % 360;
   return deg > 90 && deg < 270 ? deg + 180 : deg;
 }
+
 const SCROLL_SENSITIVITY = 0.00015;
 const SCROLL_EASE = 0.18;
 const SCROLL_EPSILON = 0.0002;
@@ -90,6 +100,52 @@ function normalizeWheelDelta(event: WheelEvent): number {
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
+}
+
+function placeEventLabels(eventNodes: EventNode[]): void {
+  type LabelBox = { left: number; right: number; top: number; bottom: number };
+  const placed: LabelBox[] = [];
+  for (const e of eventNodes) {
+    const tagSuffix = e.tagLabels.length ? ` [${e.tagLabels.join(", ")}]` : "";
+    const W = (e.label + tagSuffix).length * EVENT_LABEL_CHAR_WIDTH_USER;
+    const H = EVENT_LABEL_HEIGHT_USER;
+    const rEvent = radiusAtTheta(e.theta);
+    let shift = 0;
+    let box: LabelBox = {left: 0, right: 0, top: 0, bottom: 0};
+    let labelX = 0;
+    let labelY = 0;
+    let labelOut = false;
+    for (let step = 0; step <= EVENT_LABEL_MAX_STEPS; step++) {
+      const thetaLabel = e.theta + shift / rEvent;
+      const p = pointAtThetaOffset(thetaLabel, 14);
+      labelX = p.x;
+      labelY = p.y;
+      labelOut = Math.cos(thetaLabel) >= 0;
+      const left = labelOut ? labelX : labelX - W;
+      const right = labelOut ? labelX + W : labelX;
+      const top = labelY - H / 2;
+      const bottom = labelY + H / 2;
+      box = {left, right, top, bottom};
+      let conflict = false;
+      for (const b of placed) {
+        if (
+          left < b.right + EVENT_LABEL_GAP_USER &&
+          right > b.left - EVENT_LABEL_GAP_USER &&
+          top < b.bottom + EVENT_LABEL_GAP_USER &&
+          bottom > b.top - EVENT_LABEL_GAP_USER
+        ) {
+          conflict = true;
+          break;
+        }
+      }
+      if (!conflict) break;
+      shift += EVENT_LABEL_SHIFT_STEP_USER;
+    }
+    placed.push(box);
+    e.labelX = labelX;
+    e.labelY = labelY;
+    e.labelOut = labelOut;
+  }
 }
 
 function computeLayout(timeline: Timeline): Layout {
@@ -120,7 +176,7 @@ function computeLayout(timeline: Timeline): Layout {
   const eventNodes: EventNode[] = events.map((e) => {
     const u = unit(parseDateTime(e.datetime));
     const theta = thetaFromUnit(u);
-    const { x, y } = pointAtTheta(theta);
+    const {x, y} = pointAtTheta(theta);
     return {
       id: e.id,
       label: e.label,
@@ -129,11 +185,14 @@ function computeLayout(timeline: Timeline): Layout {
       theta,
       x,
       y,
+      labelX: 0,
+      labelY: 0,
+      labelOut: false,
       tagLabels: tagLabels(e.tags),
     };
   });
   eventNodes.sort((a, b) => a.unit - b.unit);
-
+  placeEventLabels(eventNodes);
   const rangeBounds = ranges.map((r) => {
     const v = r.value;
     let a: number;
@@ -148,13 +207,13 @@ function computeLayout(timeline: Timeline): Layout {
       a = thetaFromUnit(0);
       b = thetaFromUnit(unit(parseDateTime(v.End)));
     }
-    return a <= b ? { start: a, end: b } : { start: b, end: a };
+    return a <= b ? {start: a, end: b} : {start: b, end: a};
   });
   type LaneEvent = { theta: number; kind: 0 | 1; idx: number };
   const laneEvents: LaneEvent[] = [];
   for (let i = 0; i < ranges.length; i++) {
-    laneEvents.push({ theta: rangeBounds[i].start, kind: 1, idx: i });
-    laneEvents.push({ theta: rangeBounds[i].end, kind: 0, idx: i });
+    laneEvents.push({theta: rangeBounds[i].start, kind: 1, idx: i});
+    laneEvents.push({theta: rangeBounds[i].end, kind: 0, idx: i});
   }
   laneEvents.sort((a, b) => a.theta - b.theta || a.kind - b.kind);
   const layerOf = new Array<number>(ranges.length);
@@ -178,11 +237,11 @@ function computeLayout(timeline: Timeline): Layout {
   let maxLabelChars = "31 Dec 9999".length;
   for (const r of ranges) maxLabelChars = Math.max(maxLabelChars, r.label.length);
   const rangeArcs: RangeArc[] = ranges.map((r, i) => {
-    const { start, end } = rangeBounds[i];
+    const {start, end} = rangeBounds[i];
     const cuts = new Set<number>([start, end]);
     for (let j = 0; j < ranges.length; j++) {
       if (j === i) continue;
-      const { start: s, end: e } = rangeBounds[j];
+      const {start: s, end: e} = rangeBounds[j];
       if (s > start && s < end) cuts.add(s);
       if (e > start && e < end) cuts.add(e);
     }
@@ -202,7 +261,7 @@ function computeLayout(timeline: Timeline): Layout {
         }
       }
       const strokeWidth = RANGE_STROKE_BASE + (count - 1 - rank) * RANGE_STROKE_STRIDE;
-      segments.push({ d: arcPath(a, b), strokeWidth });
+      segments.push({d: arcPath(a, b), strokeWidth});
     }
     return {
       id: r.id,
@@ -234,7 +293,7 @@ type Props = {
   timeline: Timeline;
 };
 
-function Spiral({ timeline }: Props) {
+function Spiral({timeline}: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const layout = useMemo(() => computeLayout(timeline), [timeline]);
 
@@ -249,7 +308,7 @@ function Spiral({ timeline }: Props) {
     const labelMeta = new Map(
       layout.ranges.map((r) => [
         r.id,
-        { startTheta: r.startTheta, endTheta: r.endTheta, layer: r.layer },
+        {startTheta: r.startTheta, endTheta: r.endTheta, layer: r.layer},
       ]),
     );
     const updateView = () => {
@@ -338,7 +397,7 @@ function Spiral({ timeline }: Props) {
 
     const onResize = () => updateView();
 
-    svg.addEventListener("wheel", onWheel, { passive: false });
+    svg.addEventListener("wheel", onWheel, {passive: false});
     svg.addEventListener("click", onClick);
     window.addEventListener("resize", onResize);
     updateView();
@@ -353,9 +412,11 @@ function Spiral({ timeline }: Props) {
 
   return (
     <div className="spiral-host">
-      <svg ref={svgRef} className="spiral-svg" preserveAspectRatio="xMidYMid meet">
-        <path className="spiral-track" d={layout.spiralD} />
-        <text className="spiral-date-label" textAnchor="middle" dominantBaseline="middle" />
+      <svg ref={svgRef} className="spiral-svg"
+           preserveAspectRatio="xMidYMid meet">
+        <path className="spiral-track" d={layout.spiralD}/>
+        <text className="spiral-date-label" textAnchor="middle"
+              dominantBaseline="middle"/>
         {layout.ranges.map((r) => (
           <g key={r.id} className="spiral-range">
             {r.segments.map((s, k) => (
@@ -384,16 +445,13 @@ function Spiral({ timeline }: Props) {
           </g>
         ))}
         {layout.events.map((e) => {
-          const out = Math.cos(e.theta) >= 0;
-          const offset = 14;
-          const tx = e.x + Math.cos(e.theta) * offset;
-          const ty = e.y + Math.sin(e.theta) * offset;
-          const anchor = out ? "start" : "end";
+          const anchor = e.labelOut ? "start" : "end";
           const tagSuffix = e.tagLabels.length ? ` [${e.tagLabels.join(", ")}]` : "";
           return (
             <g key={e.id} className="spiral-event" data-event-unit={e.unit}>
-              <circle cx={e.x} cy={e.y} />
-              <text x={tx} y={ty} textAnchor={anchor} dominantBaseline="middle">
+              <circle cx={e.x} cy={e.y}/>
+              <text x={e.labelX} y={e.labelY} textAnchor={anchor}
+                    dominantBaseline="middle">
                 {e.label}
                 <tspan className="spiral-tags">{tagSuffix}</tspan>
               </text>
