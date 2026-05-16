@@ -16,6 +16,7 @@ type EventNode = {
   id: string;
   label: string;
   datetime: string;
+  unit: number;
   theta: number;
   x: number;
   y: number;
@@ -117,19 +118,21 @@ function computeLayout(timeline: Timeline): Layout {
     ids.map(tagLabel).filter((l): l is string => l !== undefined);
 
   const eventNodes: EventNode[] = events.map((e) => {
-    const theta = thetaFromUnit(unit(parseDateTime(e.datetime)));
+    const u = unit(parseDateTime(e.datetime));
+    const theta = thetaFromUnit(u);
     const { x, y } = pointAtTheta(theta);
     return {
       id: e.id,
       label: e.label,
       datetime: e.datetime,
+      unit: u,
       theta,
       x,
       y,
       tagLabels: tagLabels(e.tags),
     };
   });
-  eventNodes.sort((a, b) => a.theta - b.theta);
+  eventNodes.sort((a, b) => a.unit - b.unit);
 
   const rangeBounds = ranges.map((r) => {
     const v = r.value;
@@ -321,14 +324,28 @@ function Spiral({ timeline }: Props) {
       if (!rafId) rafId = requestAnimationFrame(animate);
     };
 
+    const onClick = (event: MouseEvent) => {
+      const t = event.target as Element | null;
+      const group = t?.closest(".spiral-event") as HTMLElement | null;
+      if (!group) return;
+      const unitStr = group.dataset.eventUnit;
+      if (!unitStr) return;
+      const u = parseFloat(unitStr);
+      if (Number.isNaN(u)) return;
+      target = clamp(u, 0, 1);
+      if (!rafId) rafId = requestAnimationFrame(animate);
+    };
+
     const onResize = () => updateView();
 
     svg.addEventListener("wheel", onWheel, { passive: false });
+    svg.addEventListener("click", onClick);
     window.addEventListener("resize", onResize);
     updateView();
 
     return () => {
       svg.removeEventListener("wheel", onWheel);
+      svg.removeEventListener("click", onClick);
       window.removeEventListener("resize", onResize);
       if (rafId) cancelAnimationFrame(rafId);
     };
@@ -374,7 +391,7 @@ function Spiral({ timeline }: Props) {
           const anchor = out ? "start" : "end";
           const tagSuffix = e.tagLabels.length ? ` [${e.tagLabels.join(", ")}]` : "";
           return (
-            <g key={e.id} className="spiral-event">
+            <g key={e.id} className="spiral-event" data-event-unit={e.unit}>
               <circle cx={e.x} cy={e.y} />
               <text x={tx} y={ty} textAnchor={anchor} dominantBaseline="middle">
                 {e.label}

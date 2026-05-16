@@ -42,6 +42,7 @@
   vector-effect: non-scaling-stroke;
   r: calc(7px * var(--screen-scale));
   stroke-width: calc(2.5px * var(--screen-scale));
+  cursor: pointer;
 }
 
 .spiral-event text {
