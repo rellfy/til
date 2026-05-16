@@ -449,6 +449,7 @@ function Spiral({timeline}: Props) {
           const tagSuffix = e.tagLabels.length ? ` [${e.tagLabels.join(", ")}]` : "";
           return (
             <g key={e.id} className="spiral-event" data-event-unit={e.unit}>
+              <line x1={e.x} y1={e.y} x2={e.labelX} y2={e.labelY} />
               <circle cx={e.x} cy={e.y}/>
               <text x={e.labelX} y={e.labelY} textAnchor={anchor}
                     dominantBaseline="middle">

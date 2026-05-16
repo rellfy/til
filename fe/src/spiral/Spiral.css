@@ -36,6 +36,14 @@
   pointer-events: none;
 }
 
+.spiral-event line {
+  stroke: var(--text);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
 .spiral-event circle {
   fill: var(--text);
   stroke: var(--bg);
