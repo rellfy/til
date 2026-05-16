@@ -71,7 +71,8 @@ function polylinePath(steps: number, pt: (i: number) => Point): string {
 }
 
 export function parseDateTime(input: string): number {
-  const t = Date.parse(input);
+  const hasTz = /[zZ]$|[+-]\d\d:?\d\d$/.test(input);
+  const t = Date.parse(hasTz ? input : input + "Z");
   if (Number.isNaN(t)) {
     throw new Error(`invalid datetime: ${input}`);
   }
