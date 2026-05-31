@@ -46,6 +46,10 @@ impl Tag {
             label: label.to_string(),
         }
     }
+
+    pub fn set_label(&mut self, label: String) {
+        self.label = label;
+    }
 }
 
 impl Event {
@@ -66,6 +70,14 @@ impl Event {
 
     pub fn remove_tag(&mut self, tag_id: &Uuid) {
         self.tags.remove(tag_id);
+    }
+
+    pub fn set_label(&mut self, label: String) {
+        self.label = label;
+    }
+
+    pub fn set_datetime(&mut self, datetime: DateTime) {
+        self.datetime = datetime;
     }
 
     pub fn set_ref(&mut self, value: Option<String>) {
@@ -95,6 +107,14 @@ impl Range {
 
     pub fn remove_tag(&mut self, tag_id: &Uuid) {
         self.tags.remove(tag_id);
+    }
+
+    pub fn set_label(&mut self, label: String) {
+        self.label = label;
+    }
+
+    pub fn set_value(&mut self, value: EventRange) {
+        self.value = value;
     }
 
     pub fn set_ref(&mut self, value: Option<String>) {

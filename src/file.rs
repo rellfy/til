@@ -25,6 +25,14 @@ impl Timeline {
         }
         Ok(postcard::from_bytes(&bytes[HEADER_LEN..])?)
     }
+
+    pub fn to_json(&self) -> TimelineResult<String> {
+        Ok(serde_json::to_string_pretty(self)?)
+    }
+
+    pub fn from_json(s: &str) -> TimelineResult<Self> {
+        Ok(serde_json::from_str(s)?)
+    }
 }
 
 #[cfg(test)]
@@ -115,5 +123,64 @@ mod tests {
             Timeline::from_bytes(&bytes).unwrap_err(),
             TimelineError::UnsupportedVersion(99),
         ));
+    }
+
+    #[test]
+    fn to_json_produces_parseable_string() {
+        let t = sample_timeline();
+        let json = t.to_json().unwrap();
+        let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(v.get("id").is_some());
+        assert!(v.get("events").is_some());
+        assert!(v.get("ranges").is_some());
+        assert!(v.get("tags").is_some());
+        assert_eq!(v.get("label").and_then(|x| x.as_str()), Some("sample"));
+    }
+
+    #[test]
+    fn json_roundtrip() {
+        let original = sample_timeline();
+        let json = original.to_json().unwrap();
+        let parsed = Timeline::from_json(&json).unwrap();
+        assert_eq!(original.id(), parsed.id());
+        assert_eq!(original.label(), parsed.label());
+        assert_eq!(original.events().len(), parsed.events().len());
+        assert_eq!(original.ranges().len(), parsed.ranges().len());
+        assert_eq!(original.tags().len(), parsed.tags().len());
+        for (id, ev) in original.events().iter() {
+            assert_eq!(parsed.events().get(id), Some(ev));
+        }
+        for (id, r) in original.ranges().iter() {
+            assert_eq!(parsed.ranges().get(id), Some(r));
+        }
+    }
+
+    #[test]
+    fn json_preserves_ref_and_attributes() {
+        let original = sample_timeline();
+        let json = original.to_json().unwrap();
+        let parsed = Timeline::from_json(&json).unwrap();
+        let original_event = original.events().values().next().unwrap();
+        let parsed_event = parsed.events().get(original_event.id()).unwrap();
+        assert_eq!(parsed_event.r#ref().as_deref(), Some("https://example.com"));
+        assert_eq!(parsed_event.attributes().as_deref(), Some("{\"k\":1}"));
+    }
+
+    #[test]
+    fn from_json_rejects_garbage() {
+        assert!(Timeline::from_json("not json").is_err());
+        assert!(Timeline::from_json("{}").is_err());
+    }
+
+    #[test]
+    fn json_to_postcard_to_json_preserves_timeline() {
+        let original = sample_timeline();
+        let json1 = original.to_json().unwrap();
+        let via_postcard_bytes = original.as_bytes().unwrap();
+        let parsed_from_postcard = Timeline::from_bytes(&via_postcard_bytes).unwrap();
+        let json2 = parsed_from_postcard.to_json().unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json1).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
     }
 }

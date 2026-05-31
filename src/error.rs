@@ -30,6 +30,12 @@ pub enum TimelineError {
     UnsupportedVersion(u8),
     #[error("failed to parse attributes JSON: {0}")]
     AttributesParse(String),
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
+    #[error("selector ambiguous: pass either a label or --id, not both")]
+    SelectorAmbiguous,
+    #[error("selector missing: pass either a label or --id")]
+    SelectorMissing,
 }
 
 pub type TimelineResult<T> = Result<T, TimelineError>;

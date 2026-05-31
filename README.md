@@ -88,10 +88,56 @@ This prints events (sorted by datetime), ranges, and tags.
 Other commands:
 
 - `til <file> inspect`: counts of events, ranges and tags.
-- `til <file> event {remove,tag,untag,list}`: manage events.
-- `til <file> range {remove,tag,untag,list}`: manage ranges.
-- `til <file> tag {add,delete,list}`: manage tags.
+- `til <file> event {remove,update,tag,untag,list}`: manage events.
+- `til <file> range {remove,update,tag,untag,list}`: manage ranges.
+- `til <file> tag {add,delete,rename,list}`: manage tags.
 - `til <file> merge <other.til> [...]`: merge other timelines into this one.
+- `til <file> import [--from <path>] [--merge]`: replace (or merge) from a JSON timeline.
+
+## Agent / scripting friendly
+
+All read commands accept `--json` for machine-readable output:
+
+```
+til half-life-3 show --json
+til half-life-3 event list --json
+til half-life-3 inspect --json
+```
+
+Mutation commands accept a stable `--id` as an alternative to addressing by label
+(useful when the label has been edited or might collide):
+
+```
+til half-life-3 event update --id 019e7d67-... --set-label "renamed"
+til half-life-3 event remove --id 019e7d67-...
+```
+
+Filter list commands by tag and/or datetime range:
+
+```
+til half-life-3 event list --tag milestone --from 2020 --to 2024
+til half-life-3 range list --from 2024 --to 2025
+```
+
+Update in place without losing the UUID:
+
+```
+til half-life-3 event update "old label" --set-label "new label" --set-ref "https://..."
+til half-life-3 range update "era1" --set-end 2025-12-31
+til half-life-3 tag rename "old-tag" "new-tag"
+```
+
+Use `--clear-ref` / `--clear-attributes` (or `--clear-start` / `--clear-end` on
+ranges) to drop a field.
+
+Round-trip through JSON for batch editing or programmatic construction:
+
+```
+til half-life-3 show --json | jq '...' | til half-life-3 import
+```
+
+`import` replaces the file by default; pass `--merge` to merge into the
+existing timeline instead.
 
 ## Web App
 
