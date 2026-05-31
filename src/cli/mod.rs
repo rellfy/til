@@ -1,11 +1,11 @@
-mod parse_datetime;
-
 use clap::{Parser, Subcommand};
 use parse_datetime::{format_datetime, parse_datetime};
 use std::path::PathBuf;
 use til::error::{TimelineError, TimelineResult};
 use til::timeline::Timeline;
 use til::unit::{Event, EventRange, Range, Tag};
+
+mod parse_datetime;
 
 #[derive(Parser)]
 #[command(name = "til", about = "Create and manage timelines")]
