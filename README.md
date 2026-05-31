@@ -61,6 +61,9 @@ To add a range, supply `--start` and/or `--end` datetimes:
 til half-life-3 range add "half-life 3 time to release" --start 2004-11-16
 ```
 
+The above adds a range that begins, but never ends until the universe
+itself dies alongside everything that has ever existed.
+
 A range needs at least one of `--start` or `--end`.
 
 To render the timeline:
