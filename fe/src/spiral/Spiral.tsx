@@ -74,15 +74,15 @@ const MONTH_NAMES = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-function formatDate(ms: number): string {
+const formatDate = (ms: number): string => {
   const d = new Date(ms);
   return `${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-}
+};
 
-function tangentRotationDeg(t: number): number {
+const tangentRotationDeg = (t: number): number => {
   const deg = ((((t * 180) / Math.PI + 90) % 360) + 360) % 360;
   return deg > 90 && deg < 270 ? deg + 180 : deg;
-}
+};
 
 const SCROLL_SENSITIVITY = 0.00015;
 const SCROLL_EASE = 0.18;
@@ -91,18 +91,18 @@ const SCROLL_EPSILON = 0.0002;
 const WHEEL_LINE_PX = 16;
 const WHEEL_PAGE_PX = 800;
 
-function normalizeWheelDelta(event: WheelEvent): number {
+const normalizeWheelDelta = (event: WheelEvent): number => {
   let dy = event.deltaY;
   if (event.deltaMode === 1) dy *= WHEEL_LINE_PX;
   else if (event.deltaMode === 2) dy *= WHEEL_PAGE_PX;
   return dy;
-}
+};
 
-function clamp(v: number, lo: number, hi: number): number {
+const clamp = (v: number, lo: number, hi: number): number => {
   return Math.max(lo, Math.min(hi, v));
-}
+};
 
-function placeEventLabels(eventNodes: EventNode[]): void {
+const placeEventLabels = (eventNodes: EventNode[]): void => {
   type LabelBox = { left: number; right: number; top: number; bottom: number };
   const placed: LabelBox[] = [];
   for (const e of eventNodes) {
@@ -146,9 +146,9 @@ function placeEventLabels(eventNodes: EventNode[]): void {
     e.labelY = labelY;
     e.labelOut = labelOut;
   }
-}
+};
 
-function computeLayout(timeline: Timeline): Layout {
+const computeLayout = (timeline: Timeline): Layout => {
   const events = Object.values(timeline.events);
   const ranges = Object.values(timeline.ranges);
 
@@ -283,18 +283,18 @@ function computeLayout(timeline: Timeline): Layout {
     tMax,
     maxLabelChars,
   };
-}
+};
 
-function formatYear(ms: number): string {
+const formatYear = (ms: number): string => {
   return new Date(ms).getUTCFullYear().toString();
-}
+};
 
 type Props = {
   timeline: Timeline;
   onTimelineChange?: (timeline: Timeline) => void;
 };
 
-function Spiral({timeline, onTimelineChange}: Props) {
+const Spiral = ({timeline, onTimelineChange}: Props) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -511,6 +511,6 @@ function Spiral({timeline, onTimelineChange}: Props) {
       </div>
     </div>
   );
-}
+};
 
 export default Spiral;

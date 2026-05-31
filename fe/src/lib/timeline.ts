@@ -33,23 +33,23 @@ export type Timeline = {
 
 let wasmReady: Promise<void> | undefined;
 
-function ensureWasm(): Promise<void> {
+const ensureWasm = (): Promise<void> => {
   if (!wasmReady) {
     wasmReady = init().then(() => undefined);
   }
   return wasmReady;
-}
+};
 
-export async function parseTimeline(bytes: Uint8Array): Promise<Timeline> {
+export const parseTimeline = async (bytes: Uint8Array): Promise<Timeline> => {
   await ensureWasm();
   return parse_timeline(bytes) as Timeline;
-}
+};
 
-export async function loadTimelineFromUrl(url: string): Promise<Timeline> {
+export const loadTimelineFromUrl = async (url: string): Promise<Timeline> => {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`failed to fetch timeline: ${res.status}`);
   }
   const bytes = new Uint8Array(await res.arrayBuffer());
   return parseTimeline(bytes);
-}
+};

@@ -3,7 +3,7 @@ import Home from "./routes/Home";
 import NotFound from "./routes/NotFound";
 import "./App.css";
 
-function App() {
+const App = () => {
   return (
     <div className="app">
       <main>
@@ -14,6 +14,6 @@ function App() {
       </main>
     </div>
   );
-}
+};
 
 export default App;

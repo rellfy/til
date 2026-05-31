@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-function NotFound() {
+const NotFound = () => {
   return (
     <section>
       <h1>404</h1>
@@ -8,6 +8,6 @@ function NotFound() {
       <Link to="/">Back home</Link>
     </section>
   );
-}
+};
 
 export default NotFound;

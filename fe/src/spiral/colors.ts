@@ -12,6 +12,6 @@ const RANGE_PALETTE = [
   "#bc4749",
 ];
 
-export function rangeColor(index: number): string {
+export const rangeColor = (index: number): string => {
   return RANGE_PALETTE[index % RANGE_PALETTE.length] ?? "#888";
-}
+};

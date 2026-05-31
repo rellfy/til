@@ -8,7 +8,7 @@ type LoadState =
   | { kind: "ready"; timeline: Timeline }
   | { kind: "error"; message: string };
 
-function Home() {
+const Home = () => {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
@@ -36,6 +36,6 @@ function Home() {
       onTimelineChange={(timeline) => setState({kind: "ready", timeline})}
     />
   );
-}
+};
 
 export default Home;
