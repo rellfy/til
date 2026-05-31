@@ -4,23 +4,27 @@ timeline file format and CLI with web viewer and editor
 
 ![til UI](ui.png)
 
-til is a file format and CLI for creating and managing timelines.
+til is a file format and CLI for creating and managing timelines, stored as
+files with the `.til` extension. Timelines hold events and ranges, all of which
+can be tagged for grouping and organising occurrences.
 
-til can create timelines with events and ranges, all of which can be tagged for
-grouping and organising occurrences.
+Events and ranges can also carry an opaque `ref` (e.g. a URL or external ID) and
+a freeform `attributes` JSON blob, so `.til` works as a minimal temporal index —
+store the index in `.til`, and point `ref` at the payload wherever it lives.
 
-til treats timelines as files, with the `.til` extension.
+This repo also includes a web app for viewing, editing and creating new
+timelines.
+You can try it out at [til.rfy.nz](https://til.rfy.nz).
 
-til can be used for all sorts of things:
+## Install
 
-- Logging incidents in systems
-- Personal events, such as family events and history
-- As an aid to study history and keep track of historical events
-- As a convenient way to build and share a timeline of anything!
+Clone locally and install the `til` CLI with cargo:
 
-This repo also includes a web app for viewing, editing and creating
-new timelines.
-You can try it out at [til.rfy.nz](https://til.rfy.nz)
+```
+cargo install --path .
+```
+
+You can also use the [web app](https://til.rfy.nz).
 
 ## Local Usage
 
@@ -75,6 +79,28 @@ Other commands:
 - `til <file> tag {add,delete,list}`: manage tags.
 - `til <file> merge <other.til> [...]`: merge other timelines into this one.
 
+## Web App
+
+The web app lives in `fe/`. The WASM bindings are generated, not committed, so
+build them on first run:
+
+```
+cd fe
+pnpm install
+pnpm build:wasm
+pnpm dev
+```
+
 ## .til file
 
 The `.til` file is a binary file that stores data for a single timeline.
+
+The layout is a 4-byte magic `TIL\0` + a 1-byte version (currently `1`) +
+a [postcard](https://postcard.jamesmunns.com/)-encoded `Timeline { id, label,
+events, ranges, tags }`. Events and ranges share the same shape: `id` (UUID
+v7), `datetime` (or `value` for ranges), `tags`, `label`, optional `ref`,
+optional `attributes`.
+
+## License
+
+MIT (see [LICENSE](LICENSE)).
