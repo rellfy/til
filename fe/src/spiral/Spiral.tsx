@@ -296,6 +296,7 @@ type Props = {
 
 function Spiral({timeline, onTimelineChange}: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -332,6 +333,7 @@ function Spiral({timeline, onTimelineChange}: Props) {
       const theta = thetaFromUnit(current);
       const focal = pointAtTheta(theta);
       const rect = svg.getBoundingClientRect();
+      hostRef.current?.style.setProperty("--progress", current.toFixed(4));
       const aspect = rect.width === 0 ? 1.5 : rect.width / rect.height;
       const w = FOCAL_VIEW_WIDTH;
       const h = w / aspect;
@@ -428,7 +430,10 @@ function Spiral({timeline, onTimelineChange}: Props) {
   }, [layout]);
 
   return (
-    <div className="spiral-host">
+    <div className="spiral-host" ref={hostRef}>
+      <div className="spiral-progress" aria-hidden="true">
+        <div className="spiral-progress-fill" />
+      </div>
       <svg ref={svgRef} className="spiral-svg"
            preserveAspectRatio="xMidYMid meet">
         <path className="spiral-track" d={layout.spiralD}/>
