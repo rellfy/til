@@ -37,9 +37,9 @@ for t in rock pop jazz soul blues folk electronic disco punk \
 done
 
 # 1950s: birth of rock and roll.
-"$TIL" "$FILE" event add --ref "https://en.wikipedia.org/wiki/Sun_Records" -- "Sun Records founded" 1950-03-27
+"$TIL" "$FILE" event add --ref "https://en.wikipedia.org/wiki/Sun_Records" -- "Sun Records founded" 1952-02-01
 "$TIL" "$FILE" event tag "Sun Records founded" milestone
-add_event "Rocket 88 by Jackie Brenston"                          1951-04-03 rock blues
+add_event "Rocket 88 by Jackie Brenston"                          1951-03-05 rock blues
 add_event "Alan Freed coins 'rock and roll' on radio"             1952-07-11 milestone
 add_event "Elvis Presley records at Sun Studio"                   1953-08-18 milestone rock
 add_event "Space Guitar by Johnny 'Guitar' Watson"                1954-02-25 blues rock
