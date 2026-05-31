@@ -27,7 +27,7 @@ type EventNode = {
   labelY: number;
   labelOut: boolean;
   tagLabels: string[];
-  ref?: string;
+  ref?: string | undefined;
 };
 
 type RangeSegment = {
@@ -211,8 +211,9 @@ const computeLayout = (timeline: Timeline): Layout => {
   type LaneEvent = { theta: number; kind: 0 | 1; idx: number };
   const laneEvents: LaneEvent[] = [];
   for (let i = 0; i < ranges.length; i++) {
-    laneEvents.push({theta: rangeBounds[i].start, kind: 1, idx: i});
-    laneEvents.push({theta: rangeBounds[i].end, kind: 0, idx: i});
+    const rb = rangeBounds[i]!;
+    laneEvents.push({theta: rb.start, kind: 1, idx: i});
+    laneEvents.push({theta: rb.end, kind: 0, idx: i});
   }
   laneEvents.sort((a, b) => a.theta - b.theta || a.kind - b.kind);
   const layerOf = new Array<number>(ranges.length);
@@ -220,10 +221,10 @@ const computeLayout = (timeline: Timeline): Layout => {
   let nextNewLane = 0;
   for (const ev of laneEvents) {
     if (ev.kind === 0) {
-      const lane = layerOf[ev.idx];
+      const lane = layerOf[ev.idx]!;
       let insertAt = freeLanes.length;
       for (let i = 0; i < freeLanes.length; i++) {
-        if (freeLanes[i] > lane) {
+        if (freeLanes[i]! > lane) {
           insertAt = i;
           break;
         }
@@ -236,24 +237,24 @@ const computeLayout = (timeline: Timeline): Layout => {
   let maxLabelChars = "31 Dec 9999".length;
   for (const r of ranges) maxLabelChars = Math.max(maxLabelChars, r.label.length);
   const rangeArcs: RangeArc[] = ranges.map((r, i) => {
-    const {start, end} = rangeBounds[i];
+    const {start, end} = rangeBounds[i]!;
     const cuts = new Set<number>([start, end]);
     for (let j = 0; j < ranges.length; j++) {
       if (j === i) continue;
-      const {start: s, end: e} = rangeBounds[j];
+      const {start: s, end: e} = rangeBounds[j]!;
       if (s > start && s < end) cuts.add(s);
       if (e > start && e < end) cuts.add(e);
     }
     const sorted = [...cuts].sort((a, b) => a - b);
     const segments: RangeSegment[] = [];
     for (let k = 0; k < sorted.length - 1; k++) {
-      const a = sorted[k];
-      const b = sorted[k + 1];
+      const a = sorted[k]!;
+      const b = sorted[k + 1]!;
       const mid = (a + b) / 2;
       let count = 0;
       let rank = 0;
       for (let j = 0; j < ranges.length; j++) {
-        const rb = rangeBounds[j];
+        const rb = rangeBounds[j]!;
         if (rb.start <= mid && rb.end >= mid) {
           if (j < i) rank++;
           count++;
@@ -269,7 +270,7 @@ const computeLayout = (timeline: Timeline): Layout => {
       segments,
       startTheta: start,
       endTheta: end,
-      layer: layerOf[i],
+      layer: layerOf[i]!,
       tagLabels: tagLabels(r.tags),
     };
   });

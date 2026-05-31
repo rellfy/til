@@ -39,7 +39,7 @@ export const normalizeDateTime = (input: string): string | null => {
   if (ym) return `${s}-01T00:00:00`;
   const by = s.match(bareYear);
   if (by) {
-    const year = parseInt(by[1], 10);
+    const year = parseInt(by[1]!, 10);
     const padded = padSignedYear(year);
     return `${padded}-01-01T00:00:00`;
   }

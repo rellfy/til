@@ -12,8 +12,8 @@ export type Event = {
   datetime: string;
   tags: Uuid[];
   label: string;
-  ref?: string;
-  attributes?: string;
+  ref?: string | undefined;
+  attributes?: string | undefined;
 };
 
 export type EventRange = { StartEnd: [string, string] } | { Start: string } | { End: string };
@@ -23,8 +23,8 @@ export type Range = {
   value: EventRange;
   tags: Uuid[];
   label: string;
-  ref?: string;
-  attributes?: string;
+  ref?: string | undefined;
+  attributes?: string | undefined;
 };
 
 export type Timeline = {
