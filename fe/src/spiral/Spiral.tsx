@@ -1,5 +1,8 @@
 import {useEffect, useMemo, useRef} from "react";
 import {parseTimeline, type Timeline} from "../lib/timeline";
+import {formatDate} from "../lib/dates";
+import Legend from "../components/Legend";
+import SplitButton, {type SplitButtonItem} from "../components/SplitButton";
 import {
   arcPath,
   parseDateTime,
@@ -68,16 +71,6 @@ const EVENT_LABEL_HEIGHT_USER = 7;
 const EVENT_LABEL_GAP_USER = 3;
 const EVENT_LABEL_SHIFT_STEP_USER = 10;
 const EVENT_LABEL_MAX_STEPS = 40;
-
-const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
-const formatDate = (ms: number): string => {
-  const d = new Date(ms);
-  return `${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-};
 
 const tangentRotationDeg = (t: number): number => {
   const deg = ((((t * 180) / Math.PI + 90) % 360) + 360) % 360;
@@ -285,16 +278,13 @@ const computeLayout = (timeline: Timeline): Layout => {
   };
 };
 
-const formatYear = (ms: number): string => {
-  return new Date(ms).getUTCFullYear().toString();
-};
-
 type Props = {
   timeline: Timeline;
   onTimelineChange?: (timeline: Timeline) => void;
+  menuItems?: SplitButtonItem[];
 };
 
-const Spiral = ({timeline, onTimelineChange}: Props) => {
+const Spiral = ({timeline, onTimelineChange, menuItems = []}: Props) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -485,30 +475,20 @@ const Spiral = ({timeline, onTimelineChange}: Props) => {
           );
         })}
       </svg>
-      <div className="spiral-legend">
-        <div className="spiral-legend-title-row">
-          <div className="spiral-legend-title">{timeline.label}</div>
-          <button
-            type="button"
-            className="spiral-legend-upload"
-            onClick={handleUploadClick}
-            title="Upload .til file"
-          >
-            upload
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".til"
-            className="spiral-legend-file"
-            onChange={handleFileChange}
-          />
-        </div>
-        <div className="spiral-legend-range">
-          {formatYear(layout.tMin)} – {formatYear(layout.tMax)}
-        </div>
-        <div className="spiral-legend-hint">scroll to travel through time</div>
-      </div>
+      <Legend
+        timeline={timeline}
+        description="scroll to travel through time"
+        button={
+          <SplitButton label="upload" onClick={handleUploadClick} items={menuItems} />
+        }
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".til"
+        className="spiral-file-input"
+        onChange={handleFileChange}
+      />
     </div>
   );
 };

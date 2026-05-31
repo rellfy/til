@@ -1,0 +1,252 @@
+.editor-host {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  padding-bottom: 4rem;
+}
+
+.editor-file-input {
+  display: none;
+}
+
+.editor-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8rem 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.editor-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.editor-field-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.editor-title-input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text);
+  padding: 0.25rem 0;
+}
+
+.editor-title-input:focus {
+  outline: none;
+  border-bottom-color: var(--text);
+}
+
+.editor-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.editor-tab {
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  opacity: 0.4;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transform: translateY(1px);
+}
+
+.editor-tab.active {
+  opacity: 1;
+  border-bottom-color: var(--text);
+}
+
+.editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.editor-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr 2fr 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.editor-row-range {
+  grid-template-columns: auto auto auto auto 2fr 1fr auto;
+}
+
+.editor-row-tag {
+  grid-template-columns: auto 1fr auto;
+}
+
+.editor-row-type {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  min-width: 44px;
+}
+
+.editor-date-input,
+.editor-label-input,
+.editor-variant-select {
+  font-family: inherit;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  color: var(--text);
+  padding: 0.25rem 0.4rem;
+  min-width: 0;
+}
+
+.editor-date-input {
+  width: 11ch;
+}
+
+.editor-date-input.invalid {
+  border-color: #e63946;
+}
+
+.editor-date-placeholder {
+  font-size: 13px;
+  opacity: 0.35;
+  text-align: center;
+  width: 11ch;
+}
+
+.editor-variant-select {
+  cursor: pointer;
+}
+
+.editor-delete {
+  font-family: inherit;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  opacity: 0.4;
+  cursor: pointer;
+  padding: 0 0.4rem;
+}
+
+.editor-delete:hover {
+  opacity: 1;
+  color: #e63946;
+}
+
+.editor-tag-cell {
+  position: relative;
+  min-width: 0;
+}
+
+.editor-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.editor-tag-chip,
+.editor-tag-add {
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text);
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.editor-tag-chip:hover,
+.editor-tag-add:hover {
+  opacity: 1;
+}
+
+.editor-tag-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 160px;
+  background: var(--bg);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.editor-tag-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0.15rem 0.25rem;
+}
+
+.editor-tag-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.editor-tag-empty {
+  font-size: 11px;
+  opacity: 0.5;
+  padding: 0.25rem;
+}
+
+.editor-add-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.editor-add-button {
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  color: var(--text);
+  padding: 0.4rem 0.75rem;
+  border-radius: 2px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.editor-add-button:hover {
+  opacity: 1;
+  border-style: solid;
+}

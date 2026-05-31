@@ -10,6 +10,12 @@ pub fn parse_timeline(bytes: &[u8]) -> Result<JsValue, JsError> {
     timeline.serialize(&serializer).map_err(to_js_error)
 }
 
+#[wasm_bindgen]
+pub fn serialize_timeline(value: JsValue) -> Result<Vec<u8>, JsError> {
+    let timeline: Timeline = serde_wasm_bindgen::from_value(value).map_err(to_js_error)?;
+    timeline.as_bytes().map_err(to_js_error)
+}
+
 fn to_js_error<E: std::fmt::Display>(err: E) -> JsError {
     JsError::new(&err.to_string())
 }

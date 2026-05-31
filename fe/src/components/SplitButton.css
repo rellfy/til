@@ -1,0 +1,71 @@
+.split-button {
+  position: relative;
+  display: inline-flex;
+  pointer-events: auto;
+}
+
+.split-button-main,
+.split-button-chevron {
+  position: relative;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid currentColor;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.split-button-main {
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px 0 0 2px;
+}
+
+.split-button-chevron {
+  padding: 0.2rem 0.4rem;
+  border-radius: 0 2px 2px 0;
+  font-size: 9px;
+  letter-spacing: 0;
+  margin-left: -1px;
+}
+
+.split-button-main:hover,
+.split-button-chevron:hover {
+  opacity: 1;
+  z-index: 1;
+}
+
+.split-button-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg, #000);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  z-index: 10;
+  opacity: 0.95;
+}
+
+.split-button-menu-item {
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.split-button-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}

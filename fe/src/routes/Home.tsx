@@ -1,39 +1,29 @@
-import { useEffect, useState } from "react";
-import sampleUrl from "../assets/world-music.til?url";
-import { loadTimelineFromUrl, type Timeline } from "../lib/timeline";
+import {useNavigate} from "react-router-dom";
 import Spiral from "../spiral/Spiral";
-
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "ready"; timeline: Timeline }
-  | { kind: "error"; message: string };
+import {createTimeline} from "../lib/timeline-edit";
+import {confirmIfDirty, useSaveTimeline, useTimeline} from "../lib/timeline-context";
 
 const Home = () => {
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
-
-  useEffect(() => {
-    let cancelled = false;
-    loadTimelineFromUrl(sampleUrl)
-      .then((timeline) => {
-        if (!cancelled) setState({ kind: "ready", timeline });
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setState({ kind: "error", message: err instanceof Error ? err.message : String(err) });
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (state.kind === "loading") return <p>Loading sample timeline...</p>;
-  if (state.kind === "error") return <p>Error: {state.message}</p>;
-
+  const {timeline, setTimeline, isDirty} = useTimeline();
+  const handleSave = useSaveTimeline();
+  const navigate = useNavigate();
+  if (!timeline) return <p>Loading sample timeline…</p>;
   return (
     <Spiral
-      timeline={state.timeline}
-      onTimelineChange={(timeline) => setState({kind: "ready", timeline})}
+      timeline={timeline}
+      onTimelineChange={(t) => setTimeline(t, false)}
+      menuItems={[
+        {
+          label: "new",
+          onClick: () => {
+            if (!confirmIfDirty(isDirty)) return;
+            setTimeline(createTimeline("Untitled timeline"), true);
+            navigate("/edit");
+          },
+        },
+        {label: "edit", onClick: () => navigate("/edit")},
+        {label: "save", onClick: handleSave},
+      ]}
     />
   );
 };

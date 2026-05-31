@@ -1,4 +1,4 @@
-import init, { parse_timeline } from "../wasm/til_wasm";
+import init, { parse_timeline, serialize_timeline } from "../wasm/til_wasm";
 
 export type Uuid = string;
 
@@ -52,4 +52,20 @@ export const loadTimelineFromUrl = async (url: string): Promise<Timeline> => {
   }
   const bytes = new Uint8Array(await res.arrayBuffer());
   return parseTimeline(bytes);
+};
+
+export const serializeTimeline = async (timeline: Timeline): Promise<Uint8Array> => {
+  await ensureWasm();
+  return serialize_timeline(timeline);
+};
+
+export const downloadTimeline = async (timeline: Timeline): Promise<void> => {
+  const bytes = await serializeTimeline(timeline);
+  const blob = new Blob([new Uint8Array(bytes)], {type: "application/octet-stream"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${timeline.label || "timeline"}.til`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
