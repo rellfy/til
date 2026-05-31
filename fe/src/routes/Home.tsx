@@ -30,7 +30,12 @@ function Home() {
   if (state.kind === "loading") return <p>Loading sample timeline...</p>;
   if (state.kind === "error") return <p>Error: {state.message}</p>;
 
-  return <Spiral timeline={state.timeline} />;
+  return (
+    <Spiral
+      timeline={state.timeline}
+      onTimelineChange={(timeline) => setState({kind: "ready", timeline})}
+    />
+  );
 }
 
 export default Home;

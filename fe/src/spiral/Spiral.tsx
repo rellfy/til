@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useRef} from "react";
-import type {Timeline} from "../lib/timeline";
+import {parseTimeline, type Timeline} from "../lib/timeline";
 import {
   arcPath,
   parseDateTime,
@@ -291,10 +291,27 @@ function formatYear(ms: number): string {
 
 type Props = {
   timeline: Timeline;
+  onTimelineChange?: (timeline: Timeline) => void;
 };
 
-function Spiral({timeline}: Props) {
+function Spiral({timeline, onTimelineChange}: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const next = await parseTimeline(bytes);
+      onTimelineChange?.(next);
+    } catch (err) {
+      alert(`Failed to parse timeline: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
   const layout = useMemo(() => computeLayout(timeline), [timeline]);
 
   useEffect(() => {
@@ -464,7 +481,24 @@ function Spiral({timeline}: Props) {
         })}
       </svg>
       <div className="spiral-legend">
-        <div className="spiral-legend-title">{timeline.label}</div>
+        <div className="spiral-legend-title-row">
+          <div className="spiral-legend-title">{timeline.label}</div>
+          <button
+            type="button"
+            className="spiral-legend-upload"
+            onClick={handleUploadClick}
+            title="Upload .til file"
+          >
+            upload
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".til"
+            className="spiral-legend-file"
+            onChange={handleFileChange}
+          />
+        </div>
         <div className="spiral-legend-range">
           {formatYear(layout.tMin)} – {formatYear(layout.tMax)}
         </div>
