@@ -1,6 +1,10 @@
 # til
 
-til is a program for creating and managing timelines.
+timeline file format and CLI with web viewer and editor
+
+![til UI](ui.png)
+
+til is a file format and CLI for creating and managing timelines.
 
 til can create timelines with events and ranges, all of which can be tagged for
 grouping and organising occurrences.
@@ -13,6 +17,10 @@ til can be used for all sorts of things:
 - Personal events, such as family events and history
 - As an aid to study history and keep track of historical events
 - As a convenient way to build and share a timeline of anything!
+
+This repo also includes a web app for viewing, editing and creating
+new timelines.
+You can try it out at [til.rfy.nz](https://til.rfy.nz)
 
 ## Local Usage
 
