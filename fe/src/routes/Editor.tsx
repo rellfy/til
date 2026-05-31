@@ -184,31 +184,53 @@ type EventRowProps = {
 };
 
 const EventRow = ({event, timeline, onChange}: EventRowProps) => {
+  const [forceRef, setForceRef] = useState(false);
+  const showRef = !!event.ref || forceRef;
+  const setRef = (v: string) =>
+    onChange(updateEvent(timeline, event.id, {ref: v || undefined}));
   return (
-    <div className="editor-row editor-row-event">
-      <div className="editor-row-type">event</div>
-      <DateField
-        value={event.datetime}
-        onCommit={(v) => onChange(updateEvent(timeline, event.id, {datetime: v}))}
-      />
-      <input
-        className="editor-label-input"
-        value={event.label}
-        onChange={(e) => onChange(updateEvent(timeline, event.id, {label: e.target.value}))}
-      />
-      <TagSelector
-        selected={event.tags}
-        tags={timeline.tags}
-        onToggle={(tagId) => onChange(toggleEventTag(timeline, event.id, tagId))}
-      />
-      <button
-        type="button"
-        className="editor-delete"
-        onClick={() => onChange(deleteEvent(timeline, event.id))}
-        aria-label="delete"
-      >
-        ×
-      </button>
+    <div className="editor-row-wrap">
+      <div className="editor-row editor-row-event">
+        <div className="editor-row-type">event</div>
+        <DateField
+          value={event.datetime}
+          onCommit={(v) => onChange(updateEvent(timeline, event.id, {datetime: v}))}
+        />
+        <input
+          className="editor-label-input"
+          value={event.label}
+          onChange={(e) => onChange(updateEvent(timeline, event.id, {label: e.target.value}))}
+        />
+        <TagSelector
+          selected={event.tags}
+          tags={timeline.tags}
+          onToggle={(tagId) => onChange(toggleEventTag(timeline, event.id, tagId))}
+        />
+        {!showRef && (
+          <button
+            type="button"
+            className="editor-ref-add"
+            onClick={() => setForceRef(true)}
+          >
+            + ref
+          </button>
+        )}
+        <button
+          type="button"
+          className="editor-delete"
+          onClick={() => onChange(deleteEvent(timeline, event.id))}
+          aria-label="delete"
+        >
+          ×
+        </button>
+      </div>
+      {showRef && (
+        <RefRow
+          value={event.ref ?? ""}
+          onChange={setRef}
+          onBlurEmpty={() => setForceRef(false)}
+        />
+      )}
     </div>
   );
 };
@@ -220,6 +242,8 @@ type RangeRowProps = {
 };
 
 const RangeRow = ({range, timeline, onChange}: RangeRowProps) => {
+  const [forceRef, setForceRef] = useState(false);
+  const showRef = !!range.ref || forceRef;
   const variant: "StartEnd" | "Start" | "End" =
     "StartEnd" in range.value ? "StartEnd" : "Start" in range.value ? "Start" : "End";
   const startVal = "StartEnd" in range.value
@@ -253,47 +277,103 @@ const RangeRow = ({range, timeline, onChange}: RangeRowProps) => {
       variant === "StartEnd" ? {StartEnd: [startVal, v]} : {End: v};
     onChange(updateRange(timeline, range.id, {value: nextVal}));
   };
+  const setRef = (v: string) =>
+    onChange(updateRange(timeline, range.id, {ref: v || undefined}));
 
   return (
-    <div className="editor-row editor-row-range">
-      <div className="editor-row-type">range</div>
-      <select
-        className="editor-variant-select"
-        value={variant}
-        onChange={(e) => setVariant(e.target.value as "StartEnd" | "Start" | "End")}
-      >
-        <option value="StartEnd">start–end</option>
-        <option value="Start">start only</option>
-        <option value="End">end only</option>
-      </select>
-      {variant !== "End" ? (
-        <DateField value={startVal} onCommit={setStart} placeholder="start" />
-      ) : (
-        <div className="editor-date-placeholder">—</div>
+    <div className="editor-row-wrap">
+      <div className="editor-row editor-row-range">
+        <div className="editor-row-type">range</div>
+        <select
+          className="editor-variant-select"
+          value={variant}
+          onChange={(e) => setVariant(e.target.value as "StartEnd" | "Start" | "End")}
+        >
+          <option value="StartEnd">start–end</option>
+          <option value="Start">start only</option>
+          <option value="End">end only</option>
+        </select>
+        {variant !== "End" ? (
+          <DateField value={startVal} onCommit={setStart} placeholder="start" />
+        ) : (
+          <div className="editor-date-placeholder">—</div>
+        )}
+        {variant !== "Start" ? (
+          <DateField value={endVal} onCommit={setEnd} placeholder="end" />
+        ) : (
+          <div className="editor-date-placeholder">—</div>
+        )}
+        <input
+          className="editor-label-input"
+          value={range.label}
+          onChange={(e) => onChange(updateRange(timeline, range.id, {label: e.target.value}))}
+        />
+        <TagSelector
+          selected={range.tags}
+          tags={timeline.tags}
+          onToggle={(tagId) => onChange(toggleRangeTag(timeline, range.id, tagId))}
+        />
+        {!showRef && (
+          <button
+            type="button"
+            className="editor-ref-add"
+            onClick={() => setForceRef(true)}
+          >
+            + ref
+          </button>
+        )}
+        <button
+          type="button"
+          className="editor-delete"
+          onClick={() => onChange(deleteRange(timeline, range.id))}
+          aria-label="delete"
+        >
+          ×
+        </button>
+      </div>
+      {showRef && (
+        <RefRow
+          value={range.ref ?? ""}
+          onChange={setRef}
+          onBlurEmpty={() => setForceRef(false)}
+        />
       )}
-      {variant !== "Start" ? (
-        <DateField value={endVal} onCommit={setEnd} placeholder="end" />
-      ) : (
-        <div className="editor-date-placeholder">—</div>
-      )}
+    </div>
+  );
+};
+
+type RefRowProps = {
+  value: string;
+  onChange: (v: string) => void;
+  onBlurEmpty?: () => void;
+};
+
+const RefRow = ({value, onChange, onBlurEmpty}: RefRowProps) => {
+  const isUrl = /^https?:\/\//i.test(value);
+  return (
+    <div className="editor-ref-row">
+      <span className="editor-ref-row-label">ref</span>
       <input
-        className="editor-label-input"
-        value={range.label}
-        onChange={(e) => onChange(updateRange(timeline, range.id, {label: e.target.value}))}
+        className="editor-ref-row-input"
+        value={value}
+        autoFocus={!value}
+        placeholder="https://… or any identifier"
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={(e) => {
+          if (!e.target.value) onBlurEmpty?.();
+        }}
       />
-      <TagSelector
-        selected={range.tags}
-        tags={timeline.tags}
-        onToggle={(tagId) => onChange(toggleRangeTag(timeline, range.id, tagId))}
-      />
-      <button
-        type="button"
-        className="editor-delete"
-        onClick={() => onChange(deleteRange(timeline, range.id))}
-        aria-label="delete"
-      >
-        ×
-      </button>
+      {isUrl && (
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="editor-ref-row-open"
+          title="open in new tab"
+        >
+          ↗
+        </a>
+      )}
     </div>
   );
 };

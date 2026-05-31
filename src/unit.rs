@@ -4,12 +4,15 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Eq, PartialEq, Getters, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Getters, Serialize, Deserialize)]
 pub struct Event {
     id: Uuid,
     datetime: DateTime,
     tags: HashSet<Uuid>,
     label: String,
+    r#ref: Option<String>,
+    /// Opaque attributes blob; conventionally JSON text.
+    attributes: Option<String>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Getters, Serialize, Deserialize)]
@@ -18,12 +21,15 @@ pub struct Tag {
     label: String,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Getters, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Getters, Serialize, Deserialize)]
 pub struct Range {
     id: Uuid,
     value: EventRange,
     tags: HashSet<Uuid>,
     label: String,
+    r#ref: Option<String>,
+    /// Opaque attributes blob; conventionally JSON text.
+    attributes: Option<String>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -49,6 +55,8 @@ impl Event {
             datetime,
             tags: HashSet::new(),
             label: label.to_string(),
+            r#ref: None,
+            attributes: None,
         }
     }
 
@@ -58,6 +66,14 @@ impl Event {
 
     pub fn remove_tag(&mut self, tag_id: &Uuid) {
         self.tags.remove(tag_id);
+    }
+
+    pub fn set_ref(&mut self, value: Option<String>) {
+        self.r#ref = value;
+    }
+
+    pub fn set_attributes(&mut self, value: Option<String>) {
+        self.attributes = value;
     }
 }
 
@@ -68,6 +84,8 @@ impl Range {
             value,
             tags: HashSet::new(),
             label: label.to_string(),
+            r#ref: None,
+            attributes: None,
         }
     }
 
@@ -77,5 +95,13 @@ impl Range {
 
     pub fn remove_tag(&mut self, tag_id: &Uuid) {
         self.tags.remove(tag_id);
+    }
+
+    pub fn set_ref(&mut self, value: Option<String>) {
+        self.r#ref = value;
+    }
+
+    pub fn set_attributes(&mut self, value: Option<String>) {
+        self.attributes = value;
     }
 }

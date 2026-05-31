@@ -27,6 +27,7 @@ type EventNode = {
   labelY: number;
   labelOut: boolean;
   tagLabels: string[];
+  ref?: string;
 };
 
 type RangeSegment = {
@@ -71,6 +72,10 @@ const EVENT_LABEL_HEIGHT_USER = 7;
 const EVENT_LABEL_GAP_USER = 3;
 const EVENT_LABEL_SHIFT_STEP_USER = 10;
 const EVENT_LABEL_MAX_STEPS = 40;
+
+const isUrlRef = (ref: string | undefined): ref is string => {
+  return !!ref && /^https?:\/\//i.test(ref);
+};
 
 const tangentRotationDeg = (t: number): number => {
   const deg = ((((t * 180) / Math.PI + 90) % 360) + 360) % 360;
@@ -182,6 +187,7 @@ const computeLayout = (timeline: Timeline): Layout => {
       labelY: 0,
       labelOut: false,
       tagLabels: tagLabels(e.tags),
+      ref: e.ref,
     };
   });
   eventNodes.sort((a, b) => a.unit - b.unit);
@@ -459,17 +465,33 @@ const Spiral = ({timeline, onTimelineChange, menuItems = []}: Props) => {
         {layout.events.map((e) => {
           const anchor = e.labelOut ? "start" : "end";
           const tagSuffix = e.tagLabels.length ? ` [${e.tagLabels.join(", ")}]` : "";
+          const isLinked = isUrlRef(e.ref);
+          const labelEl = (
+            <text
+              x={e.labelX}
+              y={e.labelY}
+              textAnchor={anchor}
+              dominantBaseline="middle"
+              className={isLinked ? "spiral-event-label linked" : "spiral-event-label"}
+            >
+              {e.label}
+              <tspan className="spiral-tags">{tagSuffix}</tspan>
+            </text>
+          );
           return (
             <g key={e.id} className="spiral-event" data-event-unit={e.unit}>
               <line x1={e.x} y1={e.y} x2={e.labelX} y2={e.labelY} />
               <circle cx={e.x} cy={e.y}/>
-              <text x={e.labelX} y={e.labelY} textAnchor={anchor}
-                    dominantBaseline="middle">
-                {e.label}
-                <tspan className="spiral-tags">{tagSuffix}</tspan>
-              </text>
+              {isLinked ? (
+                <a href={e.ref} target="_blank" rel="noopener noreferrer">
+                  {labelEl}
+                </a>
+              ) : (
+                labelEl
+              )}
               <title>
                 {e.label} ({e.datetime}){tagSuffix}
+                {e.ref ? ` → ${e.ref}` : ""}
               </title>
             </g>
           );

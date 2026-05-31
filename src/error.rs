@@ -28,6 +28,8 @@ pub enum TimelineError {
     InvalidMagic,
     #[error("unsupported .til format version: {0}")]
     UnsupportedVersion(u8),
+    #[error("failed to parse attributes JSON: {0}")]
+    AttributesParse(String),
 }
 
 pub type TimelineResult<T> = Result<T, TimelineError>;

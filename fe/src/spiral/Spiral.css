@@ -78,6 +78,18 @@
   user-select: none;
 }
 
+.spiral-event text.linked {
+  pointer-events: auto;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: calc(1px * var(--screen-scale));
+  text-underline-offset: calc(3px * var(--screen-scale));
+}
+
+.spiral-event text.linked:hover {
+  fill: #4ea1ff;
+}
+
 .spiral-event:hover circle {
   fill: #e63946;
 }

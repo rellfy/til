@@ -47,7 +47,16 @@ enum Command {
 #[derive(Subcommand)]
 enum EventCommand {
     /// Add an event.
-    Add { label: String, datetime: String },
+    Add {
+        label: String,
+        datetime: String,
+        /// Optional opaque reference (URI, UUID, S3 key, etc.).
+        #[arg(long)]
+        r#ref: Option<String>,
+        /// Optional attributes as a JSON string.
+        #[arg(long)]
+        attributes: Option<String>,
+    },
     /// Remove an event.
     Remove { label: String },
     /// Tag an event.
@@ -67,6 +76,12 @@ enum RangeCommand {
         start: Option<String>,
         #[arg(long)]
         end: Option<String>,
+        /// Optional opaque reference (URI, UUID, S3 key, etc.).
+        #[arg(long)]
+        r#ref: Option<String>,
+        /// Optional attributes as a JSON string.
+        #[arg(long)]
+        attributes: Option<String>,
     },
     /// Remove a range.
     Remove { label: String },
@@ -250,9 +265,22 @@ impl Cli {
             Some(Command::Event { command }) => {
                 let mut timeline = load_or_create(&path)?;
                 match command {
-                    EventCommand::Add { label, datetime } => {
+                    EventCommand::Add {
+                        label,
+                        datetime,
+                        r#ref,
+                        attributes,
+                    } => {
                         let dt = parse_datetime(&datetime)?;
-                        let event = Event::new(&label, dt);
+                        let mut event = Event::new(&label, dt);
+                        if r#ref.is_some() {
+                            event.set_ref(r#ref);
+                        }
+                        if let Some(json) = attributes {
+                            serde_json::from_str::<serde_json::Value>(&json)
+                                .map_err(|e| TimelineError::AttributesParse(e.to_string()))?;
+                            event.set_attributes(Some(json));
+                        }
                         timeline.add_event(event)?;
                         save(&path, &timeline)?;
                     }
@@ -276,7 +304,13 @@ impl Cli {
             Some(Command::Range { command }) => {
                 let mut timeline = load_or_create(&path)?;
                 match command {
-                    RangeCommand::Add { label, start, end } => {
+                    RangeCommand::Add {
+                        label,
+                        start,
+                        end,
+                        r#ref,
+                        attributes,
+                    } => {
                         let value = match (start, end) {
                             (Some(s), Some(e)) => {
                                 EventRange::StartEnd(parse_datetime(&s)?, parse_datetime(&e)?)
@@ -285,7 +319,15 @@ impl Cli {
                             (None, Some(e)) => EventRange::End(parse_datetime(&e)?),
                             (None, None) => return Err(TimelineError::RangeMissingBound),
                         };
-                        let range = Range::new(&label, value);
+                        let mut range = Range::new(&label, value);
+                        if r#ref.is_some() {
+                            range.set_ref(r#ref);
+                        }
+                        if let Some(json) = attributes {
+                            serde_json::from_str::<serde_json::Value>(&json)
+                                .map_err(|e| TimelineError::AttributesParse(e.to_string()))?;
+                            range.set_attributes(Some(json));
+                        }
                         timeline.add_range(range)?;
                         save(&path, &timeline)?;
                     }
