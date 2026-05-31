@@ -55,6 +55,17 @@ Dates are accepted in several forms:
 - Named month: `November 16 2004`, `Nov 2004`
 - Bare year: `2004`
 
+Events can carry an opaque `--ref` (any string; URL, UUID, S3 key, etc.) and
+an `--attributes` JSON blob:
+
+```
+til half-life-3 event add "hl3 announcement" 2024-01-01 \
+    --ref "https://example.com/hl3-press-release" \
+    --attributes '{"source": "press release", "confidence": "low"}'
+```
+
+Ranges accept the same flags.
+
 To add a range, supply `--start` and/or `--end` datetimes:
 
 ```
