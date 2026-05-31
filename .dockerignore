@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.claude
+.DS_Store
+target/
+fe/node_modules
+fe/dist
+fe/dist-ssr
+fe/src/wasm
+samples
+README.md
+ui.png
