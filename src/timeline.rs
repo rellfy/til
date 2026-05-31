@@ -171,3 +171,80 @@ impl Timeline {
         id
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::unit::EventRange;
+    use jiff::civil::DateTime;
+
+    fn dt(s: &str) -> DateTime {
+        s.parse().unwrap()
+    }
+
+    #[test]
+    fn merge_combines_distinct_timelines() {
+        let mut a = Timeline::new("a");
+        a.add_event(Event::new("first", dt("2024-01-01T00:00:00")))
+            .unwrap();
+        let mut b = Timeline::new("b");
+        b.add_event(Event::new("second", dt("2024-02-01T00:00:00")))
+            .unwrap();
+        b.add_range(Range::new(
+            "span",
+            EventRange::Start(dt("2024-03-01T00:00:00")),
+        ))
+        .unwrap();
+        b.add_tag(Tag::new("milestone")).unwrap();
+        a.merge(b).unwrap();
+        assert_eq!(a.events().len(), 2);
+        assert_eq!(a.ranges().len(), 1);
+        assert_eq!(a.tags().len(), 1);
+    }
+
+    #[test]
+    fn merge_rejects_duplicate_event_label() {
+        let mut a = Timeline::new("a");
+        a.add_event(Event::new("dup", dt("2024-01-01T00:00:00")))
+            .unwrap();
+        let mut b = Timeline::new("b");
+        b.add_event(Event::new("dup", dt("2024-02-01T00:00:00")))
+            .unwrap();
+        assert!(matches!(
+            a.merge(b).unwrap_err(),
+            TimelineError::EventLabelExists(_),
+        ));
+    }
+
+    #[test]
+    fn merge_rejects_duplicate_range_label() {
+        let mut a = Timeline::new("a");
+        a.add_range(Range::new(
+            "dup",
+            EventRange::Start(dt("2024-01-01T00:00:00")),
+        ))
+        .unwrap();
+        let mut b = Timeline::new("b");
+        b.add_range(Range::new(
+            "dup",
+            EventRange::End(dt("2024-02-01T00:00:00")),
+        ))
+        .unwrap();
+        assert!(matches!(
+            a.merge(b).unwrap_err(),
+            TimelineError::RangeLabelExists(_),
+        ));
+    }
+
+    #[test]
+    fn merge_rejects_duplicate_tag_label() {
+        let mut a = Timeline::new("a");
+        a.add_tag(Tag::new("dup")).unwrap();
+        let mut b = Timeline::new("b");
+        b.add_tag(Tag::new("dup")).unwrap();
+        assert!(matches!(
+            a.merge(b).unwrap_err(),
+            TimelineError::TagLabelExists(_),
+        ));
+    }
+}

@@ -95,3 +95,68 @@ fn month_from_name(s: &str) -> Option<i8> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn iso_datetime() {
+        let d = parse_datetime("2004-11-16T09:30:00").unwrap();
+        assert_eq!(d.year(), 2004);
+        assert_eq!(d.month(), 11);
+        assert_eq!(d.day(), 16);
+        assert_eq!(d.hour(), 9);
+        assert_eq!(d.minute(), 30);
+    }
+
+    #[test]
+    fn iso_date_defaults_to_midnight() {
+        let d = parse_datetime("2004-11-16").unwrap();
+        assert_eq!((d.year(), d.month(), d.day()), (2004, 11, 16));
+        assert_eq!((d.hour(), d.minute(), d.second()), (0, 0, 0));
+    }
+
+    #[test]
+    fn year_month_defaults_to_first_of_month() {
+        let d = parse_datetime("2004-11").unwrap();
+        assert_eq!((d.year(), d.month(), d.day()), (2004, 11, 1));
+    }
+
+    #[test]
+    fn compact_date() {
+        let d = parse_datetime("20041116").unwrap();
+        assert_eq!((d.year(), d.month(), d.day()), (2004, 11, 16));
+    }
+
+    #[test]
+    fn named_month_with_day() {
+        let d = parse_datetime("November 16 2004").unwrap();
+        assert_eq!((d.year(), d.month(), d.day()), (2004, 11, 16));
+    }
+
+    #[test]
+    fn named_month_short() {
+        let d = parse_datetime("Nov 2004").unwrap();
+        assert_eq!((d.year(), d.month(), d.day()), (2004, 11, 1));
+    }
+
+    #[test]
+    fn bare_year() {
+        let d = parse_datetime("2004").unwrap();
+        assert_eq!((d.year(), d.month(), d.day()), (2004, 1, 1));
+    }
+
+    #[test]
+    fn signed_extended_bc_year() {
+        let d = parse_datetime("-000049-01-10").unwrap();
+        assert_eq!(d.year(), -49);
+        assert_eq!((d.month(), d.day()), (1, 10));
+    }
+
+    #[test]
+    fn invalid_date_rejected() {
+        assert!(parse_datetime("not a date").is_err());
+        assert!(parse_datetime("2004-13-01").is_err());
+    }
+}
